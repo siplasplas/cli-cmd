@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "similar.hpp"
 
 namespace cli
 {
@@ -35,9 +36,19 @@ namespace cli
     void Application::parse(const std::vector<std::string>& args) const
     {
         if (args.size() != 2 || commands.find(args[1]) == commands.end())
-            std::cout << "Usage: " << app_name << " <command>" << std::endl;
-        else
         {
+            std::cout << app_name << ": '" << args[1] << "' is not a valid command see " <<
+                app_name << " --help" << std::endl ;
+            auto similars = most_similar_commands<std::unique_ptr<Command>>(args[1], commands);
+            if (similars.size() > 0) {
+                if (similars.size() > 1)
+                    std::cout << "The most similar commands are" << std::endl;
+                else
+                    std::cout << "The most similar command is" << std::endl;
+                for (const auto& similar : similars)
+                    std::cout << "     " << similar << std::endl;
+            }
+        } else {
             std::string name = args[1];
             Command* command = commands.at(name).get();
             command->execute();
