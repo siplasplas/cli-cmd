@@ -1,5 +1,8 @@
 #pragma once
-#include "distance.hpp"
+#include "distance.h"
+#ifdef CLICMD_ADD_IMPL
+  #include "distance-impl.hpp"
+#endif
 
 namespace cli
 {

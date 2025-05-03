@@ -1,0 +1,4 @@
+option('CLICMD_HEADER_ONLY', 
+  type : 'boolean', 
+  value : true,
+  description : 'Build as header-only library')
