@@ -9,12 +9,15 @@
 
 namespace cli
 {
+    class Application;
+
     class Command {
         const std::string name, desc;
     public:
         Command(std::function<void()> handler, std::string name,  std::string desc):
-            name(name), desc(desc),handler(std::move(handler)) {}
+            name(name), desc(desc), handler(std::move(handler)) {}
         const std::function<void()> handler;
+        std::string to_string();
         void execute() const
         {
             handler();
@@ -24,9 +27,11 @@ namespace cli
     class Subcategory
     {
         const std::string name;
-        std::map<std::string, std::unique_ptr<Command>> commands;
+        std::map<std::string, Command*> commandsMap;
+        std::vector<std::unique_ptr<Command>> commands;
+        Application* app;
     public:
-        explicit Subcategory(const std::string name): name(name) {}
+        Subcategory(const std::string name, Application* app): name(name), app(app) {}
         std::string to_string();
         Command* addSubcomand(std::function<void()> func, std::string str, const std::string desc);
     };
@@ -35,8 +40,10 @@ namespace cli
     {
         std::string name;
         std::vector<std::unique_ptr<Subcategory>> subcategories;
+        friend class Application;
+        Application* app;
     public:
-        explicit Category(const std::string name): name(name) {}
+        Category(const std::string name, Application* app): name(name), app(app) {}
         Category(const Category&) = delete;
         Category& operator=(const Category&) = delete;
         Category(Category&&) = default;
@@ -47,9 +54,10 @@ namespace cli
 
     class Application {
         std::string app_name;
-        std::map<std::string, std::unique_ptr<Command>> commands;
+        std::map<std::string, Command*> commandsMap;
+        std::vector<std::unique_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
-        std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, std::unique_ptr<Command>> &commands) const;
+        std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const;
     protected:
         void help();
     public:
