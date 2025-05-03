@@ -35,7 +35,7 @@ else
   )
 endif
 
-examples_sources = [
+likegit_sources = [
   'examples/likegit/main.cpp',
   'examples/likegit/developerfacing.cpp',
   'examples/likegit/external.cpp',
@@ -51,7 +51,18 @@ examples_sources = [
 ]
 
 executable('likegit',
-  examples_sources,
-  dependencies : lib_dep, # Automatycznie obsługuje header-only i linking
+  likegit_sources,
+  dependencies : lib_dep,
+  install : true
+)
+
+likegcc_sources = [
+  'examples/likegcc/main.cpp',
+  'examples/likegcc/options.cpp',
+]
+
+executable('likegcc',
+  likegcc_sources,
+  dependencies : lib_dep,
   install : true
 )
