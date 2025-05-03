@@ -15,7 +15,7 @@ namespace cli
     INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
     {
         if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc, app);
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
             commands.push_back(std::move(command));
             app->commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
@@ -83,14 +83,15 @@ namespace cli
     INLINE Command* Application::addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc)
     {
         if (commandsMap.find(str) == commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc, this);
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            command->app = this;
             commands.push_back(std::move(command));
             commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE void Application::help(Application*, Command* command) {
+    INLINE void Application::help(Application*, Command*) {
         for (const auto& category_ptr : categories) {
             auto &subcategories = category_ptr->subcategories;
             for (const auto& subcategory_ptr : subcategories)

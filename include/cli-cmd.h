@@ -20,10 +20,11 @@ namespace cli
         const std::string name, desc;
         PositionalArgsLimits positional_args{0, 0};
         std::function<void(Application*, Command* command)> handler;
-        Application* app;
+        Application* app = nullptr;
+        friend class Application;
     public:
-        Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc, Application* app):
-            name(name), desc(desc), app(app), handler(std::move(handler)) {}
+        Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc):
+            name(name), desc(desc), handler(std::move(handler)) {}
         std::string to_string();
         void setPositionalArgsLimits(int min, int max);
         void execute()
