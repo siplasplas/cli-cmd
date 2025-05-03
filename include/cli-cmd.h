@@ -43,6 +43,7 @@ namespace cli
         const std::string name;
         std::vector<std::unique_ptr<Command>> commands;
         Application* app;
+        friend class Application;
     public:
         Subcategory(const std::string name, Application* app): name(name), app(app) {}
         std::string to_string();

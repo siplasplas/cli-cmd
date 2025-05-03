@@ -35,12 +35,11 @@ namespace cli
 
     INLINE std::string Subcategory::to_string()
     {
-        std::string result = name;
+        std::string result;
         for (const auto& command_ptr : commands)
         {
-            result += "\n" + command_ptr->to_string();
+            result += command_ptr->to_string() + "\n";
         }
-        result += "\n";
         return result;
     }
 
@@ -131,10 +130,16 @@ namespace cli
     }
 
     INLINE void Application::help(Application*, Command*) {
+        size_t subCount = 0;
+        for (const auto& category_ptr : categories) {
+            subCount += category_ptr->subcategories.size();
+        }
         for (const auto& category_ptr : categories) {
             auto &subcategories = category_ptr->subcategories;
             for (const auto& subcategory_ptr : subcategories)
             {
+                if (subCount > 1)
+                    std::cout << subcategory_ptr->name << std::endl << std::endl;
                 std::cout << subcategory_ptr->to_string() << std::endl;
             }
         }
