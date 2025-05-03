@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "similar.hpp"
 
 namespace cli
 {
@@ -23,6 +22,7 @@ namespace cli
         std::string app_name;
         std::map<std::string, std::unique_ptr<Command>> commands;
         std::vector<std::string> categories;
+        std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, std::unique_ptr<Command>> &commands) const;
     protected:
         void help();
     public:

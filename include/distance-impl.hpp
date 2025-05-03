@@ -1,28 +1,28 @@
 #pragma once
 namespace cli
 {
-  inline RangeArray::RangeArray() {
+  INLINE RangeArray::RangeArray() {
   }
 
-  inline void RangeArray::setSize(int minIndex, int maxIndex) {
+  INLINE void RangeArray::setSize(int minIndex, int maxIndex) {
     this->minIndex = minIndex;
     this->maxIndex = maxIndex;
     array = new int[maxIndex - minIndex + 1]();
   }
 
-  inline RangeArray::~RangeArray() {
+  INLINE RangeArray::~RangeArray() {
     delete[] array;
   }
 
-  inline int &RangeArray::operator[](int index) {
+  INLINE int &RangeArray::operator[](int index) {
     return array[index - minIndex];
   }
 
-  inline void RangeArray::fill(int value) {
+  INLINE void RangeArray::fill(int value) {
     std::fill(array, array + (maxIndex - minIndex + 1), value);
   }
 
-  inline Distance::Distance(const std::string &A, const std::string &B) : A(A), B(B) {
+  INLINE Distance::Distance(const std::string &A, const std::string &B) : A(A), B(B) {
     M = (int) A.size();
     N = (int) B.size();
     if (M > N) {
@@ -33,7 +33,7 @@ namespace cli
     fp.setSize(-(M + 1), N + 1);
   }
 
-  inline int Distance::choose(int k) {
+  INLINE int Distance::choose(int k) {
     int v0 = fp[k - 1] + 1;
     int v1 = fp[k + 1];
     int dir;
@@ -47,7 +47,7 @@ namespace cli
     return sn;
   }
 
-  inline int Distance::snake(int k, int y) {
+  INLINE int Distance::snake(int k, int y) {
     int x = y - k;
     while (x < M && y < N && A[x] == B[y]) {
       x++;
@@ -56,7 +56,7 @@ namespace cli
     return y;
   }
 
-  inline int Distance::compare() {
+  INLINE int Distance::compare() {
     int Delta = N - M;
     fp.fill(-1);
     int p = -1;

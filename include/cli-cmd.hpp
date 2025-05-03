@@ -1,4 +1,4 @@
 #pragma once
-#define CLICMD_ADD_IMPL
 #include "cli-cmd.h"
+#define INLINE inline
 #include "cli-cmd-impl.hpp"
