@@ -1,4 +1,8 @@
+#ifdef CLICMD_HEADER_ONLY
 #include "cli-cmd.hpp"
+#else
+#include "cli-cmd.h"
+#endif
 
 void addPorcelainCommands(cli::Application &app);
 void addManipulators(cli::Application &app);
@@ -31,11 +35,9 @@ public:
     }
 };
 
-int main() {
+int main(int argc, char** argv) {
     LikeGitApp app;
     app.initHelp();
-    //auto cmd = app.addSubcomand(help, "help", "Display help information about likegit"))
-    //cmd->setPositionalArgsLimits(0, 1);
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);
@@ -47,6 +49,6 @@ int main() {
     adduserFacing(app);
     addDeveloperFacing(app);
     addExternalCommands(app);
-    app.parse({"likegit","help"});
+    app.run(argc, argv);
     return 0;
 }

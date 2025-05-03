@@ -18,8 +18,7 @@ namespace cli
 
     class Command {
         const std::string name, desc;
-        std::vector<std::string> positional_args;
-        PositionalArgsLimits positional_limit{0, 0};
+        PositionalArgsLimits positionalLimit{0, 0};
         std::function<void(Application*, Command* command)> handler;
         Application* app = nullptr;
         void initPositional(int start, const std::vector<std::string>& args);
@@ -27,6 +26,7 @@ namespace cli
     public:
         Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc):
             name(name), desc(desc), handler(std::move(handler)) {}
+        std::vector<std::string> positionalArgs;
         std::string to_string();
         void setPositionalArgsLimits(int min, int max);
         void execute()
@@ -77,7 +77,8 @@ namespace cli
         void help(Application*, Command* command);
     public:
         explicit Application(std::string  app_name);
-        void parse(const std::vector<std::string>& args) const;
+        void parse(const std::vector<std::string>& args);
+        void run(int argc, char** argv);
         Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
         Category* addCategory(std::string caption);
     };

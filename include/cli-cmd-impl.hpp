@@ -4,7 +4,7 @@
 namespace cli
 {
     INLINE void Command::setPositionalArgsLimits(int min, int max) {
-        positional_limit = {min, max};
+        positionalLimit = {min, max};
     }
 
     INLINE std::string Command::to_string()
@@ -14,9 +14,9 @@ namespace cli
 
     INLINE void Command::initPositional(int start, const std::vector<std::string>& args)
     {
-        positional_args.clear();
+        positionalArgs.clear();
         for (size_t i = start; i < args.size(); i++)
-            positional_args.push_back(args[i]);
+            positionalArgs.push_back(args[i]);
     }
 
     INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
@@ -63,8 +63,16 @@ namespace cli
         return categories.back().get();
     }
 
-    INLINE void Application::parse(const std::vector<std::string>& args) const
+    INLINE void Application::parse(const std::vector<std::string>& args)
     {
+        if (args.size() < 2)
+        {
+            auto it = commandsMap.find("help");
+            if (it != commandsMap.end()) {
+                help(this, it->second);
+            } else throw std::runtime_error("help not exists");
+            return;
+        }
         auto it = commandsMap.find(args[1]);
         if (it == commandsMap.end())
         {
@@ -84,21 +92,28 @@ namespace cli
             Command* command = it->second;
             command->initPositional(2, args);
             int actualPositionalArgsCount = args.size() -2;
-            if (actualPositionalArgsCount < command->positional_limit.min)
+            if (actualPositionalArgsCount < command->positionalLimit.min)
                 std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                    " arguments but minimal is " << command->positional_limit.min << std::endl;
-            else if (actualPositionalArgsCount > command->positional_limit.max)
+                    " arguments but minimal is " << command->positionalLimit.min << std::endl;
+            else if (actualPositionalArgsCount > command->positionalLimit.max)
                 std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                    " arguments but maximal is " << command->positional_limit.max << std::endl;
+                    " arguments but maximal is " << command->positionalLimit.max << std::endl;
             else if (!command)
             {
                 std::cout << app_name << ": '" << args[1] << "is placeholder with positional arguments:";
-                for (const auto& arg : command->positional_args)
+                for (const auto& arg : command->positionalArgs)
                     std::cout << arg << " ";
             } else
                 command->execute();
         }
     }
+
+    INLINE void Application::run(int argc, char** argv)
+    {
+        std::vector<std::string> args(argv, argv + argc);
+        parse(args);
+    }
+
 
     INLINE Command* Application::addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc)
     {
