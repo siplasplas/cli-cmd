@@ -1,17 +1,43 @@
 #pragma once
-#include "distance.h"
+#include "cli-cmd.h"
 #include "distance-impl.hpp"
 namespace cli
 {
+    INLINE Command* Subcategory::addSubcomand(std::function<void()> func, std::string str, const std::string desc)
+    {
+        if (commands.find(str) == commands.end()) {
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            auto raw_ptr = command.get();
+            commands[str] = std::move(command);
+            return raw_ptr;
+        } else throw std::runtime_error("command already exist: " + str);
+    }
+
+    INLINE std::string Category::to_string()
+    {
+        return name;
+    }
+
+    INLINE Subcategory* Category::addSubcategory(std::string caption)
+    {
+        auto subcategory = std::make_unique<Subcategory>(std::move(caption));
+        Subcategory* raw_ptr = subcategory.get();
+        subcategories.push_back(std::move(subcategory));
+        return raw_ptr;
+    }
+
     INLINE Application::Application(std::string  app_name) : app_name(std::move(app_name))
     {
-        addSubcomand("help", std::bind(&Application::help, this));
+        addSubcomand(std::bind(&Application::help, this), "help", "Display help information about likegit");
     }
 
 
-    INLINE void Application::addCategory(std::string caption)
+    INLINE Category* Application::addCategory(std::string caption)
     {
-        categories.push_back(caption);
+        auto category = std::make_unique<Category>(caption);
+        Category* raw_ptr = category.get();
+        categories.push_back(std::move(category));
+        return raw_ptr;
     }
 
     INLINE void Application::parse(const std::vector<std::string>& args) const
@@ -36,17 +62,20 @@ namespace cli
         }
     }
 
-    INLINE void Application::addSubcomand(const std::string str, std::function<void()> func)
+    INLINE Command* Application::addSubcomand(std::function<void()> func, std::string str, const std::string desc)
     {
         if (commands.find(str) == commands.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func);
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            auto raw_ptr = command.get();
             commands[str] = std::move(command);
+            return raw_ptr;
         } else throw std::runtime_error("command already exist: " + str);
     }
 
     INLINE void Application::help() {
-        for (auto category : categories)
-            std::cout << category << std::endl;
+        for (const auto& category_ptr : categories) {
+            std::cout << category_ptr->to_string() << std::endl;
+        }
     }
 
     INLINE std::vector<std::string> Application::most_similar_commands(std::string command, const std::map<std::string, std::unique_ptr<Command>> &commands) const
