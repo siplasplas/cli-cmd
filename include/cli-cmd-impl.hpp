@@ -21,6 +21,10 @@ namespace cli
 
     INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
     {
+        if (str.empty())
+            throw std::runtime_error("command is empty ");
+        if (str[0] == '-')
+            throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandsMap.find(str) == app->commandsMap.end()) {
             std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
             commands.push_back(std::move(command));

@@ -1,5 +1,5 @@
 project('cli-cmd', 'cpp',
-        version : '0.2.1',
+        version : '0.3.0-dev',
         default_options : [
           'warning_level=3',
           #'werror=true',
