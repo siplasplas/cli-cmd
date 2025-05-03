@@ -31,7 +31,10 @@ namespace cli
         void setPositionalArgsLimits(int min, int max);
         void execute()
         {
-            handler(app, this);
+            if (!handler)
+                std::cout << "Placeholder: command not set" << std::endl;
+            else
+                handler(app, this);
         }
     };
 
