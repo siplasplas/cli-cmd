@@ -33,6 +33,16 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
+    INLINE void Subcategory::addOption(std::string str, const std::string& desc)
+    {
+        if (str.empty())
+            throw std::invalid_argument("command is empty ");
+        if (desc.empty())
+            throw std::invalid_argument("must be subcategory description for help");
+        if (str[0] != '-')
+            throw std::invalid_argument("options must start with hyphen, use subcommands instead");
+    }
+
     INLINE std::string Subcategory::to_string()
     {
         std::string result;
@@ -55,10 +65,6 @@ namespace cli
         return subcategories.back().get();
     }
 
-    INLINE Application::Application(std::string  app_name) : app_name(std::move(app_name))
-    {
-    }
-
     INLINE Category* Application::addCategory(std::string caption)
     {
         auto category = std::make_unique<Category>(caption, this);
@@ -68,19 +74,19 @@ namespace cli
 
     INLINE void Application::parse(const std::vector<std::string>& args)
     {
+        auto it = commandsMap.find("help");
+        if (it == commandsMap.end())
+            throw std::runtime_error("help not exists, use app.initHelp();");
         if (args.size() < 2)
         {
-            auto it = commandsMap.find("help");
-            if (it != commandsMap.end()) {
-                help(this, it->second);
-            } else throw std::runtime_error("help not exists");
+            help(this, it->second);
             return;
         }
-        auto it = commandsMap.find(args[1]);
+        it = commandsMap.find(args[1]);
         if (it == commandsMap.end())
         {
-            std::cout << app_name << ": '" << args[1] << "' is not a valid command see " <<
-                app_name << " --help" << std::endl ;
+            std::cout << appName << ": '" << args[1] << "' is not a valid command see " <<
+                appName << " --help" << std::endl ;
             auto similars = most_similar_commands(args[1], commandsMap);
             if (similars.size() > 0) {
                 if (similars.size() > 1)
@@ -96,14 +102,14 @@ namespace cli
             command->initPositional(2, args);
             int actualPositionalArgsCount = args.size() -2;
             if (actualPositionalArgsCount < command->positionalLimit.min)
-                std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                std::cout << appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
                     " arguments but minimal is " << command->positionalLimit.min << std::endl;
             else if (actualPositionalArgsCount > command->positionalLimit.max)
-                std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                std::cout << appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
                     " arguments but maximal is " << command->positionalLimit.max << std::endl;
             else if (!command)
             {
-                std::cout << app_name << ": '" << args[1] << "is placeholder with positional arguments:";
+                std::cout << appName << ": '" << args[1] << "is placeholder with positional arguments:";
                 for (const auto& arg : command->positionalArgs)
                     std::cout << arg << " ";
             } else

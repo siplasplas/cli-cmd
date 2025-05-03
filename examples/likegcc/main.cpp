@@ -23,7 +23,7 @@ void show_version() {
 class LikeGccApp: public cli::Application
 {
 public:
-    LikeGccApp():cli::Application("likegcc"){}
+    LikeGccApp():cli::Application("likegcc", 0){}
     void initHelp()
     {
         auto cmd = addSubcomand(

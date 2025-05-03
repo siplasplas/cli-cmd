@@ -37,29 +37,18 @@ public:
     }
 };
 
-
-void mycommand(cli::Application*, cli::Command*)
+void mycommand(cli::Application*, cli::Command* commad)
 {
-    std::cout << "hello from handler!" << std::endl;
-}
-
-void addSubcategory(cli::Category *category)
-{
-    auto sub = category->addSubcategory("only common commands");
-    auto cmd = sub->addSubcomand(mycommand, "mycmd", "Info about command");
-    cmd->setPositionalArgsLimits(0, 1);
-}
-
-void addCategory(cli::Application &app)
-{
-    auto category = app.addCategory("Main category");
-    addSubcategory(category);
+    std::cout << "hello from handler!";
+    std::cout << "   mycmd has " << commad->positionalArgs.size() << " positional arguments"
+        << std::endl;
 }
 
 int main(int argc, char** argv) {
     MyApp app;
     app.initHelp();
-    addCategory(app);
+    auto cmd = app.addSubcomand(mycommand, "mycmd", "Info about command");
+    cmd->setPositionalArgsLimits(0, 1);
     app.run(argc, argv);
     return 0;
 }
