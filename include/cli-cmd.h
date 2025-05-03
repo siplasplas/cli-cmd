@@ -13,14 +13,16 @@ namespace cli
 
     struct PositionalArgsLimits {
         int min;
-        int max; /// -1 means no limit
+        int max; /// MAXINT means no limit
     };
 
     class Command {
         const std::string name, desc;
-        PositionalArgsLimits positional_args{0, 0};
+        std::vector<std::string> positional_args;
+        PositionalArgsLimits positional_limit{0, 0};
         std::function<void(Application*, Command* command)> handler;
         Application* app = nullptr;
+        void initPositional(int start, const std::vector<std::string>& args);
         friend class Application;
     public:
         Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc):

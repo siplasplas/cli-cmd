@@ -4,12 +4,19 @@
 namespace cli
 {
     INLINE void Command::setPositionalArgsLimits(int min, int max) {
-        positional_args = {min, max};
+        positional_limit = {min, max};
     }
 
     INLINE std::string Command::to_string()
     {
         return "   "  + name + std::string(std::max(1, 10 - (int)name.size()), ' ') + desc;
+    }
+
+    INLINE void Command::initPositional(int start, const std::vector<std::string>& args)
+    {
+        positional_args.clear();
+        for (size_t i = start; i < args.size(); i++)
+            positional_args.push_back(args[i]);
     }
 
     INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
@@ -58,7 +65,6 @@ namespace cli
 
     INLINE void Application::parse(const std::vector<std::string>& args) const
     {
-        if (args.size() != 2) return;
         auto it = commandsMap.find(args[1]);
         if (it == commandsMap.end())
         {
@@ -76,7 +82,21 @@ namespace cli
         } else {
             std::string name = args[1];
             Command* command = it->second;
-            command->execute();
+            command->initPositional(2, args);
+            int actualPositionalArgsCount = args.size() -2;
+            if (actualPositionalArgsCount < command->positional_limit.min)
+                std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                    " arguments but minimal is " << command->positional_limit.min << std::endl;
+            else if (actualPositionalArgsCount > command->positional_limit.max)
+                std::cout << app_name << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                    " arguments but maximal is " << command->positional_limit.max << std::endl;
+            else if (!command)
+            {
+                std::cout << app_name << ": '" << args[1] << "is placeholder with positional arguments:";
+                for (const auto& arg : command->positional_args)
+                    std::cout << arg << " ";
+            } else
+                command->execute();
         }
     }
 
