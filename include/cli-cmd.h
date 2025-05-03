@@ -11,16 +11,24 @@ namespace cli
 {
     class Application;
 
+    struct PositionalArgsLimits {
+        int min;
+        int max; /// -1 means no limit
+    };
+
     class Command {
         const std::string name, desc;
+        PositionalArgsLimits positional_args{0, 0};
+        std::function<void(Application*, Command* command)> handler;
+        Application* app;
     public:
-        Command(std::function<void()> handler, std::string name,  std::string desc):
-            name(name), desc(desc), handler(std::move(handler)) {}
-        const std::function<void()> handler;
+        Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc, Application* app):
+            name(name), desc(desc), app(app), handler(std::move(handler)) {}
         std::string to_string();
-        void execute() const
+        void setPositionalArgsLimits(int min, int max);
+        void execute()
         {
-            handler();
+            handler(app, this);
         }
     };
 
@@ -32,7 +40,7 @@ namespace cli
     public:
         Subcategory(const std::string name, Application* app): name(name), app(app) {}
         std::string to_string();
-        Command* addSubcomand(std::function<void()> func, std::string str, const std::string desc);
+        Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
     };
 
     class Category
@@ -60,11 +68,11 @@ namespace cli
         friend class Category;
         friend class Subcategory;
     protected:
-        void help();
+        void help(Application*, Command* command);
     public:
         explicit Application(std::string  app_name);
         void parse(const std::vector<std::string>& args) const;
-        Command* addSubcomand(std::function<void()> func, std::string str, const std::string desc);
+        Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
         Category* addCategory(std::string caption);
     };
 

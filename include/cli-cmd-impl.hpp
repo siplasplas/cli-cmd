@@ -3,19 +3,23 @@
 #include "distance-impl.hpp"
 namespace cli
 {
-    INLINE Command* Subcategory::addSubcomand(std::function<void()> func, std::string str, const std::string desc)
-    {
-        if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
-            commands.push_back(std::move(command));
-            app->commandsMap.emplace(str, commands.back().get());
-            return commands.back().get();
-        } else throw std::runtime_error("command already exist: " + str);
+    INLINE void Command::setPositionalArgsLimits(int min, int max) {
+        positional_args = {min, max};
     }
 
     INLINE std::string Command::to_string()
     {
         return "   "  + name + std::string(std::max(1, 10 - (int)name.size()), ' ') + desc;
+    }
+
+    INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
+    {
+        if (app->commandsMap.find(str) == app->commandsMap.end()) {
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc, app);
+            commands.push_back(std::move(command));
+            app->commandsMap.emplace(str, commands.back().get());
+            return commands.back().get();
+        } else throw std::runtime_error("command already exist: " + str);
     }
 
     INLINE std::string Subcategory::to_string()
@@ -43,9 +47,7 @@ namespace cli
 
     INLINE Application::Application(std::string  app_name) : app_name(std::move(app_name))
     {
-        addSubcomand(std::bind(&Application::help, this), "help", "Display help information about likegit");
     }
-
 
     INLINE Category* Application::addCategory(std::string caption)
     {
@@ -78,17 +80,17 @@ namespace cli
         }
     }
 
-    INLINE Command* Application::addSubcomand(std::function<void()> func, std::string str, const std::string desc)
+    INLINE Command* Application::addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc)
     {
         if (commandsMap.find(str) == commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc, this);
             commands.push_back(std::move(command));
             commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE void Application::help() {
+    INLINE void Application::help(Application*, Command* command) {
         for (const auto& category_ptr : categories) {
             auto &subcategories = category_ptr->subcategories;
             for (const auto& subcategory_ptr : subcategories)

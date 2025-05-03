@@ -16,8 +16,26 @@ void show_version() {
     std::cout << "version" << std::endl;
 }
 
+class LikeGitApp: public cli::Application
+{
+public:
+    LikeGitApp():cli::Application("likegit"){}
+    void initHelp()
+    {
+        auto cmd = addSubcomand(
+        [this](cli::Application* app, cli::Command* cmd) { this->help(app, cmd); },
+        "help",
+        "Display help information about likegit"
+    );
+        cmd->setPositionalArgsLimits(0, 1);
+    }
+};
+
 int main() {
-    cli::Application app("likegit");
+    LikeGitApp app;
+    app.initHelp();
+    //auto cmd = app.addSubcomand(help, "help", "Display help information about likegit"))
+    //cmd->setPositionalArgsLimits(0, 1);
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);
