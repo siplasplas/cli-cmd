@@ -27,7 +27,6 @@ namespace cli
     class Subcategory
     {
         const std::string name;
-        std::map<std::string, Command*> commandsMap;
         std::vector<std::unique_ptr<Command>> commands;
         Application* app;
     public:
@@ -58,6 +57,8 @@ namespace cli
         std::vector<std::unique_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
         std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const;
+        friend class Category;
+        friend class Subcategory;
     protected:
         void help();
     public:

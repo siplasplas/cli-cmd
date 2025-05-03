@@ -5,10 +5,10 @@ namespace cli
 {
     INLINE Command* Subcategory::addSubcomand(std::function<void()> func, std::string str, const std::string desc)
     {
-        if (commandsMap.find(str) == commandsMap.end()) {
+        if (app->commandsMap.find(str) == app->commandsMap.end()) {
             std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
             commands.push_back(std::move(command));
-            commandsMap.emplace(str, commands.back().get());
+            app->commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
