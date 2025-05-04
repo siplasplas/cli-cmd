@@ -175,6 +175,11 @@ namespace cli
         }
     }
 
+    INLINE void Application::parse(std::string line)
+    {
+        parse(splitStringWithQuotes(line));
+    }
+
     INLINE void Application::run(int argc, char** argv)
     {
         std::vector<std::string> args(argv, argv + argc);
@@ -238,6 +243,40 @@ namespace cli
                 result.push_back(other.first);
             }
         }
+        return result;
+    }
+
+    INLINE std::vector<std::string> Application::splitStringWithQuotes(const std::string& input) {
+        std::vector<std::string> result;
+        std::istringstream iss(input);
+        std::string token;
+        bool inQuotes = false;
+        char currentQuote = '\0';
+
+        while (iss >> std::ws) {
+            char ch = iss.peek();
+
+            if ((ch == '"' || ch == '\'') && !inQuotes) {
+                // Początek cudzysłowu
+                inQuotes = true;
+                currentQuote = ch;
+                iss.get(); // Pobierz znak cudzysłowu
+                std::string quotedToken;
+
+                while (iss.get(ch) && ch != currentQuote) {
+                    quotedToken += ch;
+                }
+
+                result.push_back(quotedToken);
+                inQuotes = false;
+            } else {
+                // Normalny token (bez cudzysłowu)
+                std::string normalToken;
+                iss >> normalToken;
+                result.push_back(normalToken);
+            }
+        }
+
         return result;
     }
 }

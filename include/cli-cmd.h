@@ -77,6 +77,7 @@ namespace cli
         std::vector<std::unique_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
         std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const;
+        std::vector<std::string> splitStringWithQuotes(const std::string& input);
         friend class Category;
         friend class Subcategory;
         /**
@@ -161,6 +162,7 @@ namespace cli
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}
         void parse(const std::vector<std::string>& args);
+        void parse(std::string line);
         void run(int argc, char** argv);
         Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
         Category* addCategory(std::string caption);
