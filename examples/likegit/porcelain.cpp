@@ -65,4 +65,27 @@ void addPorcelainCommands(cli::Application &app)
     addExamineSubcategory(category);
     addGrowSubcategory(category);
     addCollaborateSubcategory(category);
+    category->addSubcomand(nullptr, "am", "Apply a series of patches from a mailbox");
+    category->addSubcomand(nullptr, "archive", "Create an archive of files from a named tree");
+    category->addSubcomand(nullptr, "bundle", "Move objects and refs by archive");
+    category->addSubcomand(nullptr, "cherry-pick", "Apply the changes introduced by some existing commits");
+    category->addSubcomand(nullptr, "citool", "Graphical alternative to git-commit");
+    category->addSubcomand(nullptr, "clean", "Remove untracked files from the working tree");
+    category->addSubcomand(nullptr, "describe", "Give an object a human readable name based on an available ref");
+    category->addSubcomand(nullptr, "format-patch", "Prepare patches for e-mail submission");
+    category->addSubcomand(nullptr, "gc", "Cleanup unnecessary files and optimize the local repository");
+    category->addSubcomand(nullptr, "gitk", "The Git repository browser");
+    category->addSubcomand(nullptr, "gui", "A portable graphical interface to Git");
+    category->addSubcomand(nullptr, "maintenance", "Run tasks to optimize Git repository data");
+    category->addSubcomand(nullptr, "notes", "Add or inspect object notes");
+    category->addSubcomand(nullptr, "range-diff", "Compare two commit ranges (e.g. two versions of a branch)");
+    category->addSubcomand(nullptr, "revert", "Revert some existing commits");
+    category->addSubcomand(nullptr, "scalar", "A tool for managing large Git repositories");
+    category->addSubcomand(nullptr, "shortlog", "Summarize 'git log' output");
+    category->addSubcomand(nullptr, "sparse-checkout", "Reduce your working tree to a subset of tracked files");
+    category->addSubcomand(nullptr, "stash", "Stash the changes in a dirty working directory away");
+    category->addSubcomand(nullptr, "submodule", "Initialize, update or inspect submodules");
+    category->addSubcomand(nullptr, "worktree", "Manage multiple working trees");
 }
+
+

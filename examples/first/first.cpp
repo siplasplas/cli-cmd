@@ -8,7 +8,7 @@ public:
     {
         addSubcomand(
         [this](cli::Application* app, cli::Command* cmd) { this->help(app, cmd); },
-        "help","Display help information about likegit"
+        "help","Display help information about MyApp"
     );
     }
 };

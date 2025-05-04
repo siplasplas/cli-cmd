@@ -1,4 +1,7 @@
 #pragma once
+#include <sstream>
+#include <unordered_map>
+
 #include "cli-cmd.h"
 #include "distance-impl.hpp"
 namespace cli
@@ -20,6 +23,20 @@ namespace cli
     }
 
     INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
+    {
+        if (str.empty())
+            throw std::runtime_error("command is empty ");
+        if (str[0] == '-')
+            throw std::runtime_error("command can't start with hyphen, use options or flags instead");
+        if (app->commandsMap.find(str) == app->commandsMap.end()) {
+            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            commands.push_back(std::move(command));
+            app->commandsMap.emplace(str, commands.back().get());
+            return commands.back().get();
+        } else throw std::runtime_error("command already exist: " + str);
+    }
+
+    INLINE Command* Category::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -63,6 +80,47 @@ namespace cli
         auto subcategory = std::make_unique<Subcategory>(std::move(caption), app);
         subcategories.push_back(std::move(subcategory));
         return subcategories.back().get();
+    }
+
+    INLINE std::unordered_map<std::string, std::string> Application::parseSimpleArgs(const std::string& input) {
+        std::unordered_map<std::string, std::string> args;
+        std::istringstream iss(input);
+        std::string token;
+
+        while (iss >> token) {
+            size_t eq_pos = token.find('=');
+            if (eq_pos != std::string::npos) {
+                std::string key = token.substr(0, eq_pos);
+                std::string value = token.substr(eq_pos + 1);
+                args[key] = value;
+            } else {
+                args[token] = ""; // Flaga bez wartości
+            }
+        }
+        for (auto arg: args)
+            if (arg.second.empty())
+                throw std::invalid_argument("parseSimpleArgs: "+ arg.first +
+                    " is not a valid option for input: [" + input + "]");
+            else
+            {
+                std::size_t pos;
+                try
+                {
+                    std::stoi(arg.second, &pos);
+                } catch (const std::invalid_argument& e)
+                {
+                    throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
+                    "=" + arg.second + " is not number for input [" + input + "]");
+                }
+                if (pos != arg.second.size())
+                    throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
+                    "=" + arg.second + " is not number for input [" + input + "]");
+                if (arg.first != "cmdDepth" && arg.first != "combineOpts")
+                    throw std::invalid_argument("parseSimpleArgs: unknown "+ arg.first +
+                    " for input [" + input + "]");
+            }
+
+        return args;
     }
 
     INLINE Category* Application::addCategory(std::string caption)
@@ -149,6 +207,16 @@ namespace cli
                 std::cout << subcategory_ptr->to_string() << std::endl;
             }
         }
+    }
+
+    INLINE Application::Application(std::string appName, std::string namedParams): appName(std::move(appName))
+    {
+        if (!appName.empty())
+            throw std::invalid_argument("appName is empty");
+        auto args = parseSimpleArgs(namedParams);
+        cmdDepth =stoi( args["cmdDepth"]);
+        if (cmdDepth < 0 || cmdDepth > 3)
+            throw std::invalid_argument("cmdDepth must be between 0 and 3");
     }
 
     INLINE std::vector<std::string> Application::most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const

@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "distance.h"
 
@@ -54,6 +55,7 @@ namespace cli
     class Category
     {
         std::string name;
+        std::vector<std::unique_ptr<Command>> commands;
         std::vector<std::unique_ptr<Subcategory>> subcategories;
         friend class Application;
         Application* app;
@@ -65,6 +67,8 @@ namespace cli
         Category& operator=(Category&&) = default;
         std::string to_string();
         Subcategory* addSubcategory(std::string caption);
+        Command* addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str,
+                              std::string desc);
     };
 
     class Application {
@@ -87,20 +91,75 @@ namespace cli
         *     from subcategories whichs keep only common subcommands, and
         *     help --all shows all
         */
-        int cmdDepth;
+        int cmdDepth = 1;
+        /**
+         * @var combineOpts
+         * @brief Allows combining multiple single-letter options after one hyphen
+         *
+         * When enabled (1), lets users merge options like in UNIX tools:
+         * ```bash
+         * rm -rf  # Instead of rm -r -f
+         * tar -xzf # Instead of tar -x -z -f
+         * ```
+         *
+         * Values:
+         * - 0 (default): Each option requires separate hyphen (`-a -b`)
+         * - 1: Multiple options can be combined (`-ab`)
+         *
+         * @note Applies only to:
+         * - Single-letter options
+         * - Single hyphen prefix
+         * - Doesn't affect long options (--help)
+         *
+         * @warning Combined options cannot take attached values:
+         * - ❌ `-j4` (use `-j 4`)
+         * - ✅ `-abc -j 4`
+         */
+        int combineOpts = 0;
+        /**
+         * @var helpAtStart
+         * @brief Controls automatic help display when no commands/options are provided
+         *
+         * Possible values:
+         * - 0 (default): No automatic help - requires explicit `--help` flag
+         * - 1: Shows help immediately if no valid commands/options are given
+         *
+         * @note When enabled (1), these scenarios trigger help:
+         * - Empty invocation: `myapp` → shows help
+         * - Unknown command: `myapp invalid-cmd` → shows help
+         *
+         * @example Enable automatic help
+         * ```cpp
+         * MyApp():cli::Application("myapp", "helpAtStart=1"){}
+         * ```
+         *
+         * @example Default behavior
+         * ```cpp
+         * MyApp():cli::Application("myapp){}
+         * note helpAtStart=0
+         * ```
+         */
+        int helpAtStart = 0;
+        /**
+         * @var diagnostic
+         * @brief Enables diagnostic mode for command tree inspection
+         *
+         * Security levels:
+         * - 0 (default): Production mode - diagnostic commands disabled
+         * - 1: Debug mode - enables special diagnostic commands
+         *
+         * @warning Always set to 0 in production builds!
+         *
+         * @details When enabled (1), exposes diagnostic subcommands:
+         */
+        int diagnostic = 0;
+        std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
     protected:
         void help(Application*, Command* command);
     public:
-        Application(std::string appName, int depth)
-            : appName(std::move(appName)), cmdDepth(depth)
-        {
-            if (!appName.empty())
-                throw std::invalid_argument("appName is empty");
-            if (depth < 0 || depth > 3)
-                throw std::invalid_argument("cmdDepth must be betwen 0 and 3");
-        }
+        Application(std::string appName, std::string namedParams);
         explicit Application(std::string app_name)
-            : Application(std::move(app_name), 1) {}
+            : Application(std::move(app_name), "") {}
         void parse(const std::vector<std::string>& args);
         void run(int argc, char** argv);
         Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
