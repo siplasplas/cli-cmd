@@ -27,7 +27,15 @@ namespace cli
 
     INLINE void Command::print()
     {
-        std::cout << "print" << std::endl;
+        Node root(format_message("Command [%s]", name.c_str()));
+        Node* positional = root.add(Node(format_message("Positional args: (min: %d, max: %d)",
+            positionalLimit.min, positionalLimit.max)));
+        for (const auto& arg: positionalArgs)
+        {
+            positional->add(Node(arg));
+        }
+        Node* options = root.add(Node("Options"));
+        printTree(root);
     }
 
     INLINE void Command::initPositional(int start, const std::vector<std::string>& args)

@@ -23,7 +23,7 @@ void show_version() {
 class LikeGitApp: public cli::Application
 {
 public:
-    LikeGitApp():cli::Application("likegit","cmdDepth=3"){}
+    LikeGitApp():cli::Application("likegit","cmdDepth=3  diagnostic=1"){}
     void initHelp()
     {
         auto cmd = addSubcomand(
