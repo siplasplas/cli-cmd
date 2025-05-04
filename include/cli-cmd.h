@@ -30,13 +30,8 @@ namespace cli
         std::vector<std::string> positionalArgs;
         std::string to_string();
         void setPositionalArgsLimits(int min, int max);
-        void execute()
-        {
-            if (!handler)
-                std::cout << "Placeholder: command not set" << std::endl;
-            else
-                handler(app, this);
-        }
+        void execute();
+        void print();
     };
 
     class Subcategory
@@ -155,6 +150,8 @@ namespace cli
          */
         int diagnostic = 0;
         std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
+        void setArg(std::unordered_map<std::string, std::string> &args,
+            std::string name, int& arg, int min, int max);
     protected:
         void help(Application*, Command* command);
     public:

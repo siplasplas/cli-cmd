@@ -15,6 +15,19 @@ namespace cli
         return "   "  + name + std::string(std::max(1, 10 - (int)name.size()), ' ') + desc;
     }
 
+    INLINE void Command::execute()
+    {
+        if (!handler)
+            std::cout << "Placeholder: command not set" << std::endl;
+        else
+            handler(app, this);
+    }
+
+    INLINE void Command::print()
+    {
+        std::cout << "print" << std::endl;
+    }
+
     INLINE void Command::initPositional(int start, const std::vector<std::string>& args)
     {
         positionalArgs.clear();
@@ -115,7 +128,8 @@ namespace cli
                 if (pos != arg.second.size())
                     throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
                     "=" + arg.second + " is not number for input [" + input + "]");
-                if (arg.first != "cmdDepth" && arg.first != "combineOpts")
+                if (arg.first != "cmdDepth" && arg.first != "combineOpts"
+                    && arg.first != "helpAtStart" && arg.first != "diagnostic" )
                     throw std::invalid_argument("parseSimpleArgs: unknown "+ arg.first +
                     " for input [" + input + "]");
             }
@@ -171,7 +185,12 @@ namespace cli
                 for (const auto& arg : command->positionalArgs)
                     std::cout << arg << " ";
             } else
-                command->execute();
+            {
+                if (diagnostic == 1)
+                    command->print();
+                else
+                    command->execute();
+            }
         }
     }
 
@@ -214,14 +233,28 @@ namespace cli
         }
     }
 
+    INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
+        std::string name, int &arg, int min, int max)
+    {
+        std::string value = args[name];
+        if (value.empty())
+            return;
+        arg =stoi(value);
+        if (arg < min || arg > max)
+            throw std::invalid_argument(name + " must be between " + std::to_string(min) +
+                " and " + std::to_string(max));
+
+    }
+
     INLINE Application::Application(std::string appName, std::string namedParams): appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");
         auto args = parseSimpleArgs(namedParams);
-        cmdDepth =stoi( args["cmdDepth"]);
-        if (cmdDepth < 0 || cmdDepth > 3)
-            throw std::invalid_argument("cmdDepth must be between 0 and 3");
+        setArg(args, "cmdDepth", cmdDepth, 0, 3);
+        setArg(args, "combineOpts", combineOpts, 0, 1);
+        setArg(args, "helpAtStart", helpAtStart, 0, 1);
+        setArg(args, "diagnostic", diagnostic, 0, 1);
     }
 
     INLINE std::vector<std::string> Application::most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const
