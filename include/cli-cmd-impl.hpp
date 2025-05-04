@@ -4,6 +4,8 @@
 
 #include "cli-cmd.h"
 #include "distance-impl.hpp"
+#include "util-impl.hpp"
+
 namespace cli
 {
     INLINE void Command::setPositionalArgsLimits(int min, int max) {
@@ -241,9 +243,8 @@ namespace cli
             return;
         arg =stoi(value);
         if (arg < min || arg > max)
-            throw std::invalid_argument(name + " must be between " + std::to_string(min) +
-                " and " + std::to_string(max));
-
+            throw std::invalid_argument(format_message("%s is %d and must be between %d and %d",
+                name.c_str(), arg, min, max));
     }
 
     INLINE Application::Application(std::string appName, std::string namedParams): appName(std::move(appName))
