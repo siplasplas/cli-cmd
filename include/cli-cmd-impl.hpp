@@ -8,13 +8,13 @@
 
 namespace cli
 {
-    INLINE void Command::setPositionalArgsLimits(int min, int max) {
+    INLINE void Command::setPositionalArgsLimits(size_t min, size_t max) {
         positionalLimit = {min, max};
     }
 
-    INLINE std::string Command::to_string()
+    INLINE std::string Command::to_string() const
     {
-        return "   "  + name + std::string(std::max(1, 10 - (int)name.size()), ' ') + desc;
+        return "   "  + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
     }
 
     INLINE void Command::execute()
@@ -25,7 +25,7 @@ namespace cli
             handler(app, this);
     }
 
-    INLINE void Command::print()
+    INLINE void Command::print() const
     {
         Node root(fmt("Command [%s]", name.c_str()));
         Node* positional = root.add(Node(fmt("Positional args: (min: %d, max: %d)",
@@ -45,7 +45,7 @@ namespace cli
             positionalArgs.push_back(args[i]);
     }
 
-    INLINE Command* Subcategory::addSubcomand(Action func, std::string str, const std::string desc)
+    INLINE Command* Subcategory::addSubcomand(const Action& func, std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -59,7 +59,7 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE Command* Category::addSubcomand(Action func, std::string str, const std::string desc)
+    INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -73,7 +73,7 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE void Subcategory::addOption(std::string str, const std::string& desc)
+    INLINE void Subcategory::addOption(const std::string& str, const std::string& desc)
     {
         if (str.empty())
             throw std::invalid_argument("command is empty ");
@@ -83,7 +83,7 @@ namespace cli
             throw std::invalid_argument("options must start with hyphen, use subcommands instead");
     }
 
-    INLINE std::string Subcategory::to_string()
+    INLINE std::string Subcategory::to_string() const
     {
         std::string result;
         for (const auto& command_ptr : commands)
@@ -117,10 +117,10 @@ namespace cli
                 std::string value = token.substr(eq_pos + 1);
                 args[key] = value;
             } else {
-                args[token] = ""; // Flaga bez wartości
+                args[token] = ""; // Flag without value
             }
         }
-        for (auto arg: args)
+        for (const auto& arg: args)
             if (arg.second.empty())
                 throw std::invalid_argument("parseSimpleArgs: "+ arg.first +
                     " is not a valid option for input: [" + input + "]");
@@ -130,7 +130,7 @@ namespace cli
                 try
                 {
                     std::stoi(arg.second, &pos);
-                } catch (const std::invalid_argument& e)
+                } catch (const std::invalid_argument&)
                 {
                     throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
                     "=" + arg.second + " is not number for input [" + input + "]");
@@ -147,7 +147,7 @@ namespace cli
         return args;
     }
 
-    INLINE Category* Application::addCategory(std::string caption)
+    INLINE Category* Application::addCategory(const std::string& caption)
     {
         auto category = std::make_unique<Category>(caption, this);
         categories.push_back(std::move(category));
@@ -169,20 +169,19 @@ namespace cli
         {
             std::cout << appName << ": '" << args[1] << "' is not a valid command see " <<
                 appName << " --help" << std::endl ;
-            auto similars = most_similar_commands(args[1], commandsMap);
-            if (similars.size() > 0) {
-                if (similars.size() > 1)
+            auto mostSimilar = findMostSimilar(args[1], commandsMap);
+            if (!mostSimilar.empty()) {
+                if (mostSimilar.size() > 1)
                     std::cout << "The most similar commands are" << std::endl;
                 else
                     std::cout << "The most similar command is" << std::endl;
-                for (const auto& similar : similars)
+                for (const auto& similar : mostSimilar)
                     std::cout << "     " << similar << std::endl;
             }
         } else {
-            std::string name = args[1];
             Command* command = it->second;
             command->initPositional(2, args);
-            int actualPositionalArgsCount = args.size() -2;
+            size_t actualPositionalArgsCount = args.size() - 2;
             if (actualPositionalArgsCount < command->positionalLimit.min)
                 std::cout << appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
                     " arguments but minimal is " << command->positionalLimit.min << std::endl;
@@ -204,7 +203,7 @@ namespace cli
         }
     }
 
-    INLINE void Application::parse(std::string line)
+    INLINE void Application::parse(const std::string& line)
     {
         parse(splitStringWithQuotes(line));
     }
@@ -216,7 +215,7 @@ namespace cli
     }
 
 
-    INLINE Command* Application::addSubcomand(Action func, std::string str, const std::string desc)
+    INLINE Command* Application::addSubcomand(const Action& func, const std::string& str, const std::string& desc)
     {
         if (commandsMap.find(str) == commandsMap.end()) {
             std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
@@ -227,7 +226,8 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE void Application::help(Command*) {
+    INLINE void Application::help(Command*) const
+    {
         size_t subCount = 0;
         for (const auto& category_ptr : categories) {
             subCount += category_ptr->subcategories.size();
@@ -244,7 +244,7 @@ namespace cli
     }
 
     INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
-        std::string name, int &arg, int min, int max)
+        const std::string& name, int &arg, int min, int max)
     {
         std::string value = args[name];
         if (value.empty())
@@ -257,13 +257,13 @@ namespace cli
 
     INLINE void Application::initHelp()
     {
-        Action action = [](Application* app, Command* cmd) {
+        Action action = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
         addSubcomand(action, "help", "Display help information about " + appName);
     }
 
-    INLINE Application::Application(std::string appName, std::string namedParams): appName(std::move(appName))
+    INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");
@@ -275,9 +275,9 @@ namespace cli
         initHelp();
     }
 
-    INLINE std::vector<std::string> Application::most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const
+    INLINE std::vector<std::string> Application::findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands)
     {
-        const int maxDist = 5;
+        constexpr int maxDist = 5;
         std::vector<std::string> result;
         int bestLen = maxDist;
         for (const auto& other : commands)
@@ -305,13 +305,13 @@ namespace cli
         char currentQuote = '\0';
 
         while (iss >> std::ws) {
-            char ch = iss.peek();
+            char ch = static_cast<char>(iss.peek());
 
             if ((ch == '"' || ch == '\'') && !inQuotes) {
-                // Początek cudzysłowu
+                // The beginning of the quotation marks
                 inQuotes = true;
                 currentQuote = ch;
-                iss.get(); // Pobierz znak cudzysłowu
+                iss.get(); // Download the quotation mark
                 std::string quotedToken;
 
                 while (iss.get(ch) && ch != currentQuote) {
@@ -321,7 +321,7 @@ namespace cli
                 result.push_back(quotedToken);
                 inQuotes = false;
             } else {
-                // Normalny token (bez cudzysłowu)
+                // Normal token (without quotation marks)
                 std::string normalToken;
                 iss >> normalToken;
                 result.push_back(normalToken);

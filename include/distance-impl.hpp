@@ -1,4 +1,6 @@
 #pragma once
+#include "distance.h"
+
 namespace cli
 {
   INLINE RangeArray::RangeArray() {

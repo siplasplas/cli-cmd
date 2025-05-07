@@ -2,6 +2,7 @@
 #include <cstdarg>
 #include <stdexcept>
 #include "util.h"
+#include "iostream"
 
 namespace cli
 {
@@ -20,7 +21,7 @@ namespace cli
      * @warning Avoid using this function for new code - it will be deprecated
      *          once C++20 becomes the minimum required standard.
      *
-     * @example format_message("Error %d: %s", 42, "File not found");
+     * @example fmt("Error %d: %s", 42, "File not found");
      *
      * @throws std::runtime_error if formatting fails
      */

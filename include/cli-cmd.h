@@ -1,12 +1,11 @@
 #pragma once
 #include <functional>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-#include "distance.h"
 
 namespace cli
 {
@@ -14,8 +13,8 @@ namespace cli
     class Command;
 
     struct PositionalArgsLimits {
-        int min;
-        int max; /// MAXINT means no limit
+        size_t min;
+        size_t max;
     };
 
     using Action = std::function<void(Application*, Command*)>;
@@ -29,12 +28,12 @@ namespace cli
         friend class Application;
     public:
         Command(Action handler, std::string name,  std::string desc):
-            name(name), desc(desc), handler(std::move(handler)) {}
+            name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
         std::vector<std::string> positionalArgs;
-        std::string to_string();
-        void setPositionalArgsLimits(int min, int max);
+        std::string to_string() const;
+        void setPositionalArgsLimits(size_t min, size_t max);
         void execute();
-        void print();
+        void print() const;
     };
 
     class Subcategory
@@ -44,10 +43,10 @@ namespace cli
         Application* app;
         friend class Application;
     public:
-        Subcategory(const std::string name, Application* app): name(name), app(app) {}
-        std::string to_string();
-        Command* addSubcomand(Action func, std::string str, const std::string desc);
-        void addOption(std::string str, const std::string& desc);
+        Subcategory(std::string  name, Application* app): name(std::move(name)), app(app) {}
+        std::string to_string() const;
+        Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
+        static void addOption(const std::string& str, const std::string& desc);
     };
 
     class Category
@@ -58,14 +57,14 @@ namespace cli
         friend class Application;
         Application* app;
     public:
-        Category(const std::string name, Application* app): name(name), app(app) {}
+        Category(std::string  name, Application* app): name(std::move(name)), app(app) {}
         Category(const Category&) = delete;
         Category& operator=(const Category&) = delete;
         Category(Category&&) = default;
         Category& operator=(Category&&) = default;
         std::string to_string();
         Subcategory* addSubcategory(std::string caption);
-        Command* addSubcomand(Action func, std::string str, std::string desc);
+        Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
     };
 
     class Application {
@@ -73,8 +72,8 @@ namespace cli
         std::map<std::string, Command*> commandsMap;
         std::vector<std::unique_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
-        std::vector<std::string> most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const;
-        std::vector<std::string> splitStringWithQuotes(const std::string& input);
+        static std::vector<std::string> findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands);
+        static std::vector<std::string> splitStringWithQuotes(const std::string& input);
         friend class Category;
         friend class Subcategory;
         /**
@@ -86,7 +85,7 @@ namespace cli
         * - 1 Flat command list (default): most common simple case for start
         * - 2 Categories: case with many subcommands
         * - 3 Subcategories: even more commands, help shows not all, but subcommands
-        *     from subcategories whichs keep only common subcommands, and
+        *     from subcategories which keep only common subcommands, and
         *     help --all shows all
         */
         int cmdDepth = 1;
@@ -126,12 +125,12 @@ namespace cli
          * - Empty invocation: `myapp` → shows help
          * - Unknown command: `myapp invalid-cmd` → shows help
          *
-         * @example Enable automatic help
+         * @example : enable automatic help
          * ```cpp
          * MyApp():cli::Application("myapp", "helpAtStart=1"){}
          * ```
          *
-         * @example Default behavior
+         * @example : default behavior
          * ```cpp
          * MyApp():cli::Application("myapp){}
          * note helpAtStart=0
@@ -151,21 +150,21 @@ namespace cli
          * @details When enabled (1), exposes diagnostic subcommands:
          */
         int diagnostic = 0;
-        std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
-        void setArg(std::unordered_map<std::string, std::string> &args,
-            std::string name, int& arg, int min, int max);
+        static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
+        static void setArg(std::unordered_map<std::string, std::string> &args,
+                           const std::string& name, int& arg, int min, int max);
     protected:
-        void help(Command* command);
+        void help(Command* command) const;
         void initHelp();
     public:
-        Application(std::string appName, std::string namedParams);
+        Application(std::string appName, const std::string& namedParams);
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}
         void parse(const std::vector<std::string>& args);
-        void parse(std::string line);
+        void parse(const std::string& line);
         void run(int argc, char** argv);
-        Command* addSubcomand(Action func, std::string str, const std::string desc);
-        Category* addCategory(std::string caption);
+        Command* addSubcomand(const Action& func, const std::string& str, const std::string& desc);
+        Category* addCategory(const std::string& caption);
     };
 
 }
