@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 
@@ -52,8 +53,7 @@ namespace cli
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
-            commands.push_back(std::move(command));
+            commands.push_back(std::make_shared<Command>(func, str, desc));
             app->commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
@@ -66,8 +66,7 @@ namespace cli
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
-            commands.push_back(std::move(command));
+            commands.push_back(std::make_shared<Command>(func, str, desc));
             app->commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
@@ -95,7 +94,7 @@ namespace cli
 
     INLINE std::string Category::to_string()
     {
-        return name;
+        return description;
     }
 
     INLINE Subcategory* Category::addSubcategory(std::string caption)
@@ -218,30 +217,84 @@ namespace cli
     INLINE Command* Application::addSubcomand(const Action& func, const std::string& str, const std::string& desc)
     {
         if (commandsMap.find(str) == commandsMap.end()) {
-            std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
             command->app = this;
-            commands.push_back(std::move(command));
+            commands.push_back(command);
             commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
 
+    /**
+     * @brief Display help message based on command hierarchy depth.
+     *
+     * Behavior depends on the value of `cmdDepth`:
+     * - 0: Shows only top-level commands (GCC-style).
+     * - 1: Flat list of commands defined in the Application.
+     * - 2: Shows commands from Application and grouped by categories with descriptions.
+     * - 3: If `bAll` is false, shows subcategories' descriptions and their commands.
+     *      If `bAll` is true, shows all commands from categories and subcategories, sorted by name within categories.
+     */
     INLINE void Application::help(Command*) const
     {
-        size_t subCount = 0;
-        for (const auto& category_ptr : categories) {
-            subCount += category_ptr->subcategories.size();
+        const bool bAll = true;
+
+        if (cmdDepth <= 1) {
+            for (const auto& cmd : commands) {
+                std::cout << cmd->to_string() << std::endl;
+            }
+            return;
         }
-        for (const auto& category_ptr : categories) {
-            auto &subcategories = category_ptr->subcategories;
-            for (const auto& subcategory_ptr : subcategories)
-            {
-                if (subCount > 1)
-                    std::cout << subcategory_ptr->name << std::endl << std::endl;
-                std::cout << subcategory_ptr->to_string() << std::endl;
+
+        if (cmdDepth == 2) {
+            for (const auto& cmd : commands) {
+                std::cout << cmd->to_string() << std::endl;
+            }
+
+            for (const auto& category_ptr : categories) {
+                std::cout << std::endl << category_ptr->description << std::endl;
+                for (const auto& cmd : category_ptr->commands) {
+                    std::cout << cmd->to_string() << std::endl;
+                }
+            }
+            return;
+        }
+
+        if (cmdDepth == 3) {
+            for (const auto& cmd : commands) {
+                std::cout << cmd->to_string() << std::endl;
+            }
+
+            for (const auto& category_ptr : categories) {
+                if (!bAll) {
+                    for (const auto& subcategory_ptr : category_ptr->subcategories) {
+                        std::cout << std::endl << subcategory_ptr->description << std::endl;
+                        for (const auto& cmd : subcategory_ptr->commands) {
+                            std::cout << cmd->to_string() << std::endl;
+                        }
+                    }
+                } else {
+                    std::vector<std::shared_ptr<Command>> all_cmds = category_ptr->commands;
+                    for (const auto& subcategory_ptr : category_ptr->subcategories) {
+                        all_cmds.insert(all_cmds.end(),
+                                        subcategory_ptr->commands.begin(),
+                                        subcategory_ptr->commands.end());
+                    }
+
+                    std::sort(all_cmds.begin(), all_cmds.end(),
+                        [](const std::shared_ptr<Command>& a, const std::shared_ptr<Command>& b) {
+                            return a->name < b->name;
+                        });
+
+                    std::cout << std::endl << category_ptr->description << std::endl;
+                    for (const auto& cmd : all_cmds) {
+                        std::cout << cmd->to_string() << std::endl;
+                    }
+                }
             }
         }
     }
+
 
     INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
         const std::string& name, int &arg, int min, int max)

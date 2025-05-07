@@ -4,17 +4,9 @@
 #include "cli-cmd.h"
 #endif
 
-void clone_(cli::Application*, cli::Command* command)
-{
-    std::cout << "clone " << command->positionalArgs[0] << std::endl;
-}
-
 void addOneSubcategory(cli::Category *category)
 {
     auto sub = category->addSubcategory("start a working area (see also: git help tutorial)");
-    auto cmd = sub->addSubcomand(clone_, "clone", "Clone a repository into a new directory");
-    cmd->setPositionalArgsLimits(1, 1);
-    sub->addSubcomand(nullptr, "init", "Create an empty Git repository or reinitialize an existing one");
     sub->addOption("-pass-exit-codes","Exit with highest error code from a phase.");
     sub->addOption("--help",  "Display this information.");
     sub->addOption("--target-help", "Display target specific command line options\n"

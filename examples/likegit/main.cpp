@@ -21,7 +21,7 @@ void show_version() {
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("likegit");
+    cli::Application app("likegit", "cmdDepth=3");
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);

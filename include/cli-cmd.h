@@ -38,12 +38,12 @@ namespace cli
 
     class Subcategory
     {
-        const std::string name;
-        std::vector<std::unique_ptr<Command>> commands;
+        const std::string description;
+        std::vector<std::shared_ptr<Command>> commands;
         Application* app;
         friend class Application;
     public:
-        Subcategory(std::string  name, Application* app): name(std::move(name)), app(app) {}
+        Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
         std::string to_string() const;
         Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
         static void addOption(const std::string& str, const std::string& desc);
@@ -51,13 +51,13 @@ namespace cli
 
     class Category
     {
-        std::string name;
-        std::vector<std::unique_ptr<Command>> commands;
+        std::string description;
+        std::vector<std::shared_ptr<Command>> commands;
         std::vector<std::unique_ptr<Subcategory>> subcategories;
         friend class Application;
         Application* app;
     public:
-        Category(std::string  name, Application* app): name(std::move(name)), app(app) {}
+        Category(std::string  name, Application* app): description(std::move(name)), app(app) {}
         Category(const Category&) = delete;
         Category& operator=(const Category&) = delete;
         Category(Category&&) = default;
@@ -70,7 +70,7 @@ namespace cli
     class Application {
         std::string appName;
         std::map<std::string, Command*> commandsMap;
-        std::vector<std::unique_ptr<Command>> commands;
+        std::vector<std::shared_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
         static std::vector<std::string> findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands);
         static std::vector<std::string> splitStringWithQuotes(const std::string& input);
