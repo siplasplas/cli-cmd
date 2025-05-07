@@ -16,7 +16,17 @@ namespace cli
 
     INLINE std::string Command::to_string() const
     {
-        return "   "  + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
+        std::string indent(3, ' ');
+        std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
+        if (name == "help")
+        {
+            if (app->cmdDepth == 3)
+            {
+                std::string blank(10, ' ');
+                result += "\n" + indent + blank + "--all : print all commands";
+            }
+        }
+        return result;
     }
 
     INLINE void Command::addOption(const std::string& str, const std::string& desc)
@@ -113,6 +123,11 @@ namespace cli
     INLINE void Command::setHandler(const Action& handler)
     {
         this->handler = handler;
+    }
+
+    inline bool Command::containsOption(const std::string& opt)
+    {
+        return optionSet.find(opt) != optionSet.end();
     }
 
     INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
@@ -305,9 +320,9 @@ namespace cli
      * - 3: If `bAll` is false, shows subcategories' descriptions and their commands.
      *      If `bAll` is true, shows all commands from categories and subcategories, sorted by name within categories.
      */
-    INLINE void Application::help(Command*) const
+    INLINE void Application::help(Command* cmdHelp) const
     {
-        const bool bAll = true;
+        const bool bAll = cmdHelp->containsOption("--all");
 
         if (cmdDepth <= 1) {
             for (const auto& cmd : commands) {
@@ -399,7 +414,9 @@ namespace cli
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
-        addSubcomand(actionHelp, "help", "Display help information about " + appName);
+        auto helpCmd = addSubcomand(actionHelp, "help", "Display help information about " + appName);
+        if (cmdDepth==3)
+            helpCmd->addOption("--all", "all commands");
     }
 
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))

@@ -40,6 +40,7 @@ namespace cli
         Command(Action handler, std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
         void setHandler(const Action& handler);
+        bool containsOption(const std::string &opt);
         Application* app = nullptr;
         std::vector<std::string> positionalArgs;
         std::set<std::string> optionSet;
