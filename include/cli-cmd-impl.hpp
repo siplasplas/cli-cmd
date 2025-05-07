@@ -284,7 +284,17 @@ namespace cli
         Command* command = nullptr;
         int start = 1;
         if (cmdDepth == 0)
+        {
             command = mainCommand.get();
+            if (args[1] == "help")
+            {
+                auto cmdHelp = getCommand("help");
+                cmdHelp->positionalArgs.clear();
+                cmdHelp->positionalArgs.push_back(appName);
+                help(cmdHelp);
+                return;
+            }
+        }
         else
         {
             start = 2;
@@ -447,6 +457,8 @@ namespace cli
         };
         mainCommand = std::make_shared<Command>(actionStub, appName, appName);
         mainCommand->app = this;
+        commands.push_back(mainCommand);
+        commandMap.emplace(appName, commands.back().get());
 
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
