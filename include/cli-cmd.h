@@ -35,6 +35,7 @@ namespace cli
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
         std::map<std::string, std::shared_ptr<Option>> availableOptionMap;
+        std::vector<std::string> ignoredOptions;
     public:
         Command(Action handler, std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}

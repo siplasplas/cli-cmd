@@ -37,6 +37,17 @@ namespace cli
 
     INLINE void Command::execute()
     {
+        if (!ignoredOptions.empty())
+        {
+            std::cout << "ignored options: [";
+            for (size_t i = 0; i < ignoredOptions.size(); ++i)
+            {
+                if (i>0)
+                    std::cout << " ";
+                std::cout << ignoredOptions[i];
+            }
+            std::cout << "]" << std::endl;
+        }
         if (!handler)
             std::cout << "Placeholder for [" << name << "]: command not set" << std::endl;
         else
@@ -68,7 +79,12 @@ namespace cli
             auto arg = args[i];
             assert(!arg.empty());
             if (arg[0]=='-')
-                optionSet.insert(arg);
+            {
+                if (availableOptionMap.find(arg)  != availableOptionMap.end())
+                    optionSet.insert(arg);
+                else
+                    ignoredOptions.push_back(arg);
+            }
             else
                 positionalArgs.push_back(args[i]);
         }
