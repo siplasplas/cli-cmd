@@ -16,12 +16,13 @@ void adduserFacing(cli::Application &app);
 void addDeveloperFacing(cli::Application &app);
 void addExternalCommands(cli::Application &app);
 
-void show_version() {
-    std::cout << "version" << std::endl;
+void clone_(cli::Application*, cli::Command* command)
+{
+    std::cout << "clone " << command->positionalArgs[0] << std::endl;
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("likegit", "cmdDepth=3");
+    cli::Application app("likegit", "cmdDepth=3 diagnostic=1");
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);
@@ -33,6 +34,10 @@ int main(int argc, char** argv) {
     adduserFacing(app);
     addDeveloperFacing(app);
     addExternalCommands(app);
+    auto cloneCmd = app.getCommand("clone");
+    cloneCmd->setHandler(clone_);
+    cloneCmd->addOption("-v", "be more verbose");
+    cloneCmd->addOption("-q", "be more quiet");
     app.run(argc, argv);
     return 0;
 }

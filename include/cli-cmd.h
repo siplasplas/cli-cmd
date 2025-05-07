@@ -2,6 +2,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -19,21 +20,31 @@ namespace cli
 
     using Action = std::function<void(Application*, Command*)>;
 
+    class Option
+    {
+        const std::string name, desc;
+    public:
+        Option(std::string name,  std::string desc):
+            name(std::move(name)), desc(std::move(desc)) {}
+    };
+
     class Command {
         const std::string name, desc;
         PositionalArgsLimits positionalLimit{0, 0};
         Action handler;
-        Application* app = nullptr;
-        void initPositional(int start, const std::vector<std::string>& args);
+        void parse(int start, const std::vector<std::string>& args);
         friend class Application;
+        std::map<std::string, std::shared_ptr<Option>> availableOptionMap;
     public:
         Command(Action handler, std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
         void setHandler(const Action& handler);
+        Application* app = nullptr;
         std::vector<std::string> positionalArgs;
+        std::set<std::string> optionSet;
         std::string to_string() const;
         void setPositionalArgsLimits(size_t min, size_t max);
-        static void addOption(const std::string& str, const std::string& desc);
+        void addOption(const std::string& str, const std::string& desc);
         void execute();
         void print() const;
     };
@@ -69,14 +80,14 @@ namespace cli
     };
 
     class Application {
-        std::string appName;
-        std::map<std::string, Command*> commandsMap;
+        std::map<std::string, Command*> commandMap;
         std::vector<std::shared_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
-        static std::vector<std::string> findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands);
+        static std::vector<std::string> findMostSimilar(const std::string& proposed, const std::vector<std::string> &keys);
         static std::vector<std::string> splitStringWithQuotes(const std::string& input);
         friend class Category;
         friend class Subcategory;
+    public:
         /**
         * @var cmdDepth
         * @brief command hierarchy depth
@@ -151,9 +162,11 @@ namespace cli
          * @details When enabled (1), exposes diagnostic subcommands:
          */
         int diagnostic = 0;
+    private:
         static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
         static void setArg(std::unordered_map<std::string, std::string> &args,
                            const std::string& name, int& arg, int min, int max);
+        void commandNotFound(std::string arg);
     protected:
         void help(Command* command) const;
         void mainCommandStub(Command*);
@@ -162,7 +175,9 @@ namespace cli
         Application(std::string appName, const std::string& namedParams);
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}
+        std::string appName;
         std::shared_ptr<Command> mainCommand;
+        Command* getCommand(const std::string& name);
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
         void run(int argc, char** argv);

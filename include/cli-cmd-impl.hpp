@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <unordered_map>
 
@@ -26,12 +27,18 @@ namespace cli
             throw std::invalid_argument("must be description for help");
         if (str[0] != '-')
             throw std::invalid_argument("options must start with hyphen, use subcommands instead");
+        if (availableOptionMap.find(str) != availableOptionMap.end()) {
+            throw std::invalid_argument(fmt("option %s already exists for command %s",
+                str.c_str(), name.c_str()));
+        }
+        auto option = std::make_shared<Option>(str, desc);
+        availableOptionMap[str] = option;
     }
 
     INLINE void Command::execute()
     {
         if (!handler)
-            std::cout << "Placeholder: command not set" << std::endl;
+            std::cout << "Placeholder for [" << name << "]: command not set" << std::endl;
         else
             handler(app, this);
     }
@@ -45,15 +52,46 @@ namespace cli
         {
             positional->add(Node(arg));
         }
-        root.add(Node("Options"));
+        Node* options = root.add(Node("Options"));
+        for (const auto& arg: optionSet)
+        {
+            options->add(Node(arg));
+        }
         printTree(root);
     }
 
-    INLINE void Command::initPositional(int start, const std::vector<std::string>& args)
+    INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
         positionalArgs.clear();
         for (size_t i = start; i < args.size(); i++)
-            positionalArgs.push_back(args[i]);
+        {
+            auto arg = args[i];
+            assert(!arg.empty());
+            if (arg[0]=='-')
+                optionSet.insert(arg);
+            else
+                positionalArgs.push_back(args[i]);
+        }
+
+        size_t actualPositionalArgsCount = positionalArgs.size();
+        if (actualPositionalArgsCount < positionalLimit.min)
+            std::cout << app->appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                " arguments but minimal is " << positionalLimit.min << std::endl;
+        else if (actualPositionalArgsCount > positionalLimit.max)
+            std::cout << app->appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
+                " arguments but maximal is " << positionalLimit.max << std::endl;
+        else if (!handler)
+        {
+            std::cout << app->appName << ": '" << args[1] << "is placeholder with positional arguments:";
+            for (const auto& arg : positionalArgs)
+                std::cout << arg << " ";
+        } else
+        {
+            if (app->diagnostic == 1)
+                print();
+            else
+                execute();
+        }
     }
 
     INLINE void Command::setHandler(const Action& handler)
@@ -67,9 +105,11 @@ namespace cli
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
-        if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            commands.push_back(std::make_shared<Command>(func, str, desc));
-            app->commandsMap.emplace(str, commands.back().get());
+        if (app->commandMap.find(str) == app->commandMap.end()) {
+            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
+            command->app = app;
+            commands.push_back(command);
+            app->commandMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
@@ -92,9 +132,11 @@ namespace cli
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
-        if (app->commandsMap.find(str) == app->commandsMap.end()) {
-            commands.push_back(std::make_shared<Command>(func, str, desc));
-            app->commandsMap.emplace(str, commands.back().get());
+        if (app->commandMap.find(str) == app->commandMap.end()) {
+            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
+            command->app = app;
+            commands.push_back(command);
+            app->commandMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
@@ -158,53 +200,60 @@ namespace cli
         return categories.back().get();
     }
 
+    INLINE Command* Application::getCommand(const std::string& name)
+    {
+        auto it = commandMap.find(name);
+        if (it != commandMap.end()) {
+            return it->second;
+        } else
+            throw std::runtime_error("command not found: " + name);
+    }
+
+    INLINE void Application::commandNotFound(std::string arg)
+    {
+        std::cout << appName << ": '" << arg << "' is not a valid command see " <<
+                appName << " --help" << std::endl ;
+        std::vector<std::string> keys;
+        keys.reserve(commandMap.size());
+        std::transform(commandMap.begin(), commandMap.end(), std::back_inserter(keys),
+                       [](const auto& pair) { return pair.first; });
+        auto mostSimilar = findMostSimilar(arg, keys);
+        if (!mostSimilar.empty()) {
+            if (mostSimilar.size() > 1)
+                std::cout << "The most similar commands are" << std::endl;
+            else
+                std::cout << "The most similar command is" << std::endl;
+            for (const auto& similar : mostSimilar)
+                std::cout << "     " << similar << std::endl;
+        }
+    }
+
     INLINE void Application::parse(const std::vector<std::string>& args)
     {
-        auto it = commandsMap.find("help");
-        if (it == commandsMap.end())
+        auto it = commandMap.find("help");
+        if (it == commandMap.end())
             throw std::runtime_error("help not exists, use app.initHelp();");
         if (args.size() < 2)
         {
             mainCommand->execute();
             return;
         }
-        it = commandsMap.find(args[1]);
-        if (it == commandsMap.end())
+        Command* command = nullptr;
+        int start = 1;
+        if (cmdDepth == 0)
+            command = mainCommand.get();
+        else
         {
-            std::cout << appName << ": '" << args[1] << "' is not a valid command see " <<
-                appName << " --help" << std::endl ;
-            auto mostSimilar = findMostSimilar(args[1], commandsMap);
-            if (!mostSimilar.empty()) {
-                if (mostSimilar.size() > 1)
-                    std::cout << "The most similar commands are" << std::endl;
-                else
-                    std::cout << "The most similar command is" << std::endl;
-                for (const auto& similar : mostSimilar)
-                    std::cout << "     " << similar << std::endl;
-            }
-        } else {
-            Command* command = it->second;
-            command->initPositional(2, args);
-            size_t actualPositionalArgsCount = args.size() - 2;
-            if (actualPositionalArgsCount < command->positionalLimit.min)
-                std::cout << appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                    " arguments but minimal is " << command->positionalLimit.min << std::endl;
-            else if (actualPositionalArgsCount > command->positionalLimit.max)
-                std::cout << appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                    " arguments but maximal is " << command->positionalLimit.max << std::endl;
-            else if (!command)
-            {
-                std::cout << appName << ": '" << args[1] << "is placeholder with positional arguments:";
-                for (const auto& arg : command->positionalArgs)
-                    std::cout << arg << " ";
-            } else
-            {
-                if (diagnostic == 1)
-                    command->print();
-                else
-                    command->execute();
-            }
+            start = 2;
+            it = commandMap.find(args[1]);
+            if (it == commandMap.end())
+                commandNotFound(args[1]);
+            else
+                command = it->second;
         }
+        if (command == nullptr)
+            return;
+        command->parse(start, args);
     }
 
     INLINE void Application::parse(const std::string& line)
@@ -221,11 +270,11 @@ namespace cli
 
     INLINE Command* Application::addSubcomand(const Action& func, const std::string& str, const std::string& desc)
     {
-        if (commandsMap.find(str) == commandsMap.end()) {
+        if (commandMap.find(str) == commandMap.end()) {
             std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
             command->app = this;
             commands.push_back(command);
-            commandsMap.emplace(str, commands.back().get());
+            commandMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
@@ -349,14 +398,14 @@ namespace cli
         initSystemCommands();
     }
 
-    INLINE std::vector<std::string> Application::findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands)
+    INLINE std::vector<std::string> Application::findMostSimilar(const std::string& proposed, const std::vector<std::string> &keys)
     {
         constexpr int maxDist = 5;
         std::vector<std::string> result;
         int bestLen = maxDist;
-        for (const auto& other : commands)
+        for (const auto& key : keys)
         {
-            cli ::Distance dist(command, other.first);
+            cli ::Distance dist(proposed, key);
             int d = dist.compare();
             if (d <= bestLen)
             {
@@ -365,7 +414,7 @@ namespace cli
                     result.clear();
                     bestLen = d;
                 }
-                result.push_back(other.first);
+                result.push_back(key);
             }
         }
         return result;

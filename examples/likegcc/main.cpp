@@ -4,7 +4,7 @@
 #include "cli-cmd.h"
 #endif
 
-void addOptions(cli::Application &app);
+void addOptions(cli::Command *cmd);
 
 void show_version() {
     std::cout << "version" << std::endl;
@@ -17,8 +17,9 @@ void mainHandler(cli::Application*, cli::Command*)
 
 int main(int argc, char** argv) {
     cli::Application app("likegcc", "cmdDepth=0");
-    auto mainCommand = app.mainCommand;
+    auto mainCommand = app.mainCommand.get();
     mainCommand->setHandler(mainHandler);
+    addOptions(mainCommand);
     app.run(argc, argv);
     return 0;
 }
