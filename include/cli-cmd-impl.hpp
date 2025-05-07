@@ -81,6 +81,13 @@ namespace cli
         printTree(root);
     }
 
+    inline std::string Option::to_string() const
+    {
+        std::string indent(3, ' ');
+        std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
+        return result;
+    }
+
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
         positionalArgs.clear();
@@ -240,10 +247,8 @@ namespace cli
             throw std::runtime_error("command not found: " + name);
     }
 
-    INLINE void Application::commandNotFound(std::string arg)
+    INLINE void Application::proposeSimilar(const std::string& arg) const
     {
-        std::cout << appName << ": '" << arg << "' is not a valid command see " <<
-                appName << " --help" << std::endl ;
         std::vector<std::string> keys;
         keys.reserve(commandMap.size());
         std::transform(commandMap.begin(), commandMap.end(), std::back_inserter(keys),
@@ -257,6 +262,13 @@ namespace cli
             for (const auto& similar : mostSimilar)
                 std::cout << "     " << similar << std::endl;
         }
+    }
+
+    INLINE void Application::commandNotFound(const std::string &arg)
+    {
+        std::cout << appName << ": '" << arg << "' is not a valid command see " <<
+                appName << " --help" << std::endl ;
+        proposeSimilar(arg);
     }
 
     INLINE void Application::parse(const std::vector<std::string>& args)
@@ -320,7 +332,7 @@ namespace cli
      * - 3: If `bAll` is false, shows subcategories' descriptions and their commands.
      *      If `bAll` is true, shows all commands from categories and subcategories, sorted by name within categories.
      */
-    INLINE void Application::help(Command* cmdHelp) const
+    INLINE void Application::printCommands(Command* cmdHelp) const
     {
         const bool bAll = cmdHelp->containsOption("--all");
 
@@ -380,6 +392,31 @@ namespace cli
         }
     }
 
+    INLINE void Application::commandHelp(Command* cmdHelp) const
+    {
+        auto arg = cmdHelp->positionalArgs[0];
+        auto it = commandMap.find(arg);
+        if (it == commandMap.end())
+        {
+            std::cout << fmt("command [%s] not exists", arg.c_str()) << std::endl;
+            proposeSimilar(arg);
+        }
+        auto cmd = it->second;
+        std::cout << cmd->to_string() << std::endl;
+        for (const auto& [key, opt] : cmd->availableOptionMap) {
+            std::cout << opt->to_string() << std::endl;
+        }
+    }
+
+
+    INLINE void Application::help(Command* cmdHelp) const
+    {
+        if (cmdHelp->positionalArgs.empty())
+            printCommands(cmdHelp);
+        else
+            commandHelp(cmdHelp);
+    }
+
     INLINE void Application::mainCommandStub(Command* command)
     {
         if (cmdDepth == 0)
@@ -415,6 +452,7 @@ namespace cli
             app->help(cmd);
         };
         auto helpCmd = addSubcomand(actionHelp, "help", "Display help information about " + appName);
+        helpCmd->setPositionalArgsLimits(0, 1);
         if (cmdDepth==3)
             helpCmd->addOption("--all", "all commands");
     }

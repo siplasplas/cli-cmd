@@ -26,6 +26,7 @@ namespace cli
     public:
         Option(std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)) {}
+        std::string to_string() const;
     };
 
     class Command {
@@ -168,7 +169,10 @@ namespace cli
         static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
         static void setArg(std::unordered_map<std::string, std::string> &args,
                            const std::string& name, int& arg, int min, int max);
-        void commandNotFound(std::string arg);
+        void commandNotFound(const std::string &arg);
+        void printCommands(Command* cmdHelp) const;
+        void commandHelp(Command* cmdHelp) const;
+        void proposeSimilar(const std::string &arg) const;
     protected:
         void help(Command* command) const;
         void mainCommandStub(Command*);

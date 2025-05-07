@@ -22,7 +22,7 @@ void clone_(cli::Application*, cli::Command* command)
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("likegit", "cmdDepth=3 diagnostic=1");
+    cli::Application app("likegit", "cmdDepth=3 diagnostic=0");
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);

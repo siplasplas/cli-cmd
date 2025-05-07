@@ -3,7 +3,7 @@ project('cli-cmd', 'cpp',
         default_options : [
           'warning_level=3',
           #'werror=true',
-          'cpp_std=c++14'
+          'cpp_std=c++17'
         ])
 
 # --- get option from meson_options.txt ---
