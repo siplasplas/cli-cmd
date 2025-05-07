@@ -61,7 +61,7 @@ namespace cli
         this->handler = handler;
     }
 
-    INLINE Command* Subcategory::addSubcomand(const Action& func, std::string str, const std::string& desc)
+    INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -74,7 +74,19 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
+    INLINE std::string Category::to_string()
+    {
+        return description;
+    }
+
+    INLINE Subcategory* Category::addSubcategory(std::string caption)
+    {
+        auto subcategory = std::make_unique<Subcategory>(std::move(caption), app);
+        subcategories.push_back(std::move(subcategory));
+        return subcategories.back().get();
+    }
+
+    INLINE Command* Subcategory::addSubcomand(const Action& func, std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -95,18 +107,6 @@ namespace cli
             result += command_ptr->to_string() + "\n";
         }
         return result;
-    }
-
-    INLINE std::string Category::to_string()
-    {
-        return description;
-    }
-
-    INLINE Subcategory* Category::addSubcategory(std::string caption)
-    {
-        auto subcategory = std::make_unique<Subcategory>(std::move(caption), app);
-        subcategories.push_back(std::move(subcategory));
-        return subcategories.back().get();
     }
 
     INLINE std::unordered_map<std::string, std::string> Application::parseSimpleArgs(const std::string& input) {
