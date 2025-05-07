@@ -35,6 +35,16 @@ else
   )
 endif
 
+first_sources = [
+  'examples/first/first.cpp',
+]
+
+executable('first',
+           first_sources,
+           dependencies : lib_dep,
+           install : true
+)
+
 likegit_sources = [
   'examples/likegit/main.cpp',
   'examples/likegit/developerfacing.cpp',
