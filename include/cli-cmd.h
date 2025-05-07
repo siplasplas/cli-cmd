@@ -23,12 +23,12 @@ namespace cli
     class Command {
         const std::string name, desc;
         PositionalArgsLimits positionalLimit{0, 0};
-        std::function<void(Application*, Command* command)> handler;
+        Action handler;
         Application* app = nullptr;
         void initPositional(int start, const std::vector<std::string>& args);
         friend class Application;
     public:
-        Command(std::function<void(Application*, Command* command)> handler, std::string name,  std::string desc):
+        Command(Action handler, std::string name,  std::string desc):
             name(name), desc(desc), handler(std::move(handler)) {}
         std::vector<std::string> positionalArgs;
         std::string to_string();
@@ -46,7 +46,7 @@ namespace cli
     public:
         Subcategory(const std::string name, Application* app): name(name), app(app) {}
         std::string to_string();
-        Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
+        Command* addSubcomand(Action func, std::string str, const std::string desc);
         void addOption(std::string str, const std::string& desc);
     };
 
@@ -65,8 +65,7 @@ namespace cli
         Category& operator=(Category&&) = default;
         std::string to_string();
         Subcategory* addSubcategory(std::string caption);
-        Command* addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str,
-                              std::string desc);
+        Command* addSubcomand(Action func, std::string str, std::string desc);
     };
 
     class Application {
@@ -165,7 +164,7 @@ namespace cli
         void parse(const std::vector<std::string>& args);
         void parse(std::string line);
         void run(int argc, char** argv);
-        Command* addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc);
+        Command* addSubcomand(Action func, std::string str, const std::string desc);
         Category* addCategory(std::string caption);
     };
 

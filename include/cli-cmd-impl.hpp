@@ -45,7 +45,7 @@ namespace cli
             positionalArgs.push_back(args[i]);
     }
 
-    INLINE Command* Subcategory::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
+    INLINE Command* Subcategory::addSubcomand(Action func, std::string str, const std::string desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -59,7 +59,7 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE Command* Category::addSubcomand(std::function<void(cli::Application*, Command* command)> func, std::string str, const std::string desc)
+    INLINE Command* Category::addSubcomand(Action func, std::string str, const std::string desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
@@ -216,7 +216,7 @@ namespace cli
     }
 
 
-    INLINE Command* Application::addSubcomand(std::function<void(Application*, Command* command)> func, std::string str, const std::string desc)
+    INLINE Command* Application::addSubcomand(Action func, std::string str, const std::string desc)
     {
         if (commandsMap.find(str) == commandsMap.end()) {
             std::unique_ptr<Command> command = std::make_unique<Command>(func, str, desc);
