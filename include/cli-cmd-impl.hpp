@@ -161,7 +161,7 @@ namespace cli
             throw std::runtime_error("help not exists, use app.initHelp();");
         if (args.size() < 2)
         {
-            help(this, it->second);
+            help(it->second);
             return;
         }
         it = commandsMap.find(args[1]);
@@ -227,7 +227,7 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + str);
     }
 
-    INLINE void Application::help(Application*, Command*) {
+    INLINE void Application::help(Command*) {
         size_t subCount = 0;
         for (const auto& category_ptr : categories) {
             subCount += category_ptr->subcategories.size();
@@ -255,6 +255,14 @@ namespace cli
                 name.c_str(), arg, min, max));
     }
 
+    INLINE void Application::initHelp()
+    {
+        Action action = [](Application* app, Command* cmd) {
+            app->help(cmd);
+        };
+        addSubcomand(action, "help", "Display help information about " + appName);
+    }
+
     INLINE Application::Application(std::string appName, std::string namedParams): appName(std::move(appName))
     {
         if (!appName.empty())
@@ -264,6 +272,7 @@ namespace cli
         setArg(args, "combineOpts", combineOpts, 0, 1);
         setArg(args, "helpAtStart", helpAtStart, 0, 1);
         setArg(args, "diagnostic", diagnostic, 0, 1);
+        initHelp();
     }
 
     INLINE std::vector<std::string> Application::most_similar_commands(std::string command, const std::map<std::string, Command*> &commands) const

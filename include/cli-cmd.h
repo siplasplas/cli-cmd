@@ -11,11 +11,14 @@
 namespace cli
 {
     class Application;
+    class Command;
 
     struct PositionalArgsLimits {
         int min;
         int max; /// MAXINT means no limit
     };
+
+    using Action = std::function<void(Application*, Command*)>;
 
     class Command {
         const std::string name, desc;
@@ -153,7 +156,8 @@ namespace cli
         void setArg(std::unordered_map<std::string, std::string> &args,
             std::string name, int& arg, int min, int max);
     protected:
-        void help(Application*, Command* command);
+        void help(Command* command);
+        void initHelp();
     public:
         Application(std::string appName, std::string namedParams);
         explicit Application(std::string app_name)

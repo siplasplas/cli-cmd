@@ -20,25 +20,8 @@ void show_version() {
     std::cout << "version" << std::endl;
 }
 
-class LikeGccApp: public cli::Application
-{
-public:
-    LikeGccApp():cli::Application("likegcc", "cmdDepth=0"){}
-    void initHelp()
-    {
-        auto cmd = addSubcomand(
-        [this](cli::Application* app, cli::Command* cmd) { this->help(app, cmd); },
-        "help",
-        "Display help information about likegit"
-    );
-        cmd->setPositionalArgsLimits(0, 1);
-    }
-};
-
-
 int main(int argc, char** argv) {
-    LikeGccApp app;
-    app.initHelp();
+    cli::Application app("likegcc");
     addOptions(app);
     app.run(argc, argv);
     return 0;
