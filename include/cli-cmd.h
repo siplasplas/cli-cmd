@@ -29,9 +29,11 @@ namespace cli
     public:
         Command(Action handler, std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
+        void setHandler(const Action& handler);
         std::vector<std::string> positionalArgs;
         std::string to_string() const;
         void setPositionalArgsLimits(size_t min, size_t max);
+        static void addOption(const std::string& str, const std::string& desc);
         void execute();
         void print() const;
     };
@@ -46,7 +48,6 @@ namespace cli
         Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
         std::string to_string() const;
         Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
-        static void addOption(const std::string& str, const std::string& desc);
     };
 
     class Category
@@ -155,11 +156,13 @@ namespace cli
                            const std::string& name, int& arg, int min, int max);
     protected:
         void help(Command* command) const;
-        void initHelp();
+        void mainCommandStub(Command*);
+        void initSystemCommands();
     public:
         Application(std::string appName, const std::string& namedParams);
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}
+        std::shared_ptr<Command> mainCommand;
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
         void run(int argc, char** argv);

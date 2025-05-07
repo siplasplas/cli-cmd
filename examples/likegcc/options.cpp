@@ -6,7 +6,7 @@
 
 void addOneSubcategory(cli::Category *category)
 {
-    auto sub = category->addSubcategory("start a working area (see also: git help tutorial)");
+    /*auto sub = category->addSubcategory("start a working area (see also: git help tutorial)");
     sub->addOption("-pass-exit-codes","Exit with highest error code from a phase.");
     sub->addOption("--help",  "Display this information.");
     sub->addOption("--target-help", "Display target specific command line options\n"
@@ -57,11 +57,5 @@ void addOneSubcategory(cli::Category *category)
     sub->addOption("-x <language>", "Specify the language of the following input files.\n"
                                "Permissible languages include: c c++ assembler none\n"
                                "'none' means revert to the default behavior of\n"
-                               "guessing the language based on the file's extension.");
-}
-
-void addOptions(cli::Application &app)
-{
-    auto category = app.addCategory("Main Porcelain Commands");
-    addOneSubcategory(category);
+                               "guessing the language based on the file's extension.");*/
 }

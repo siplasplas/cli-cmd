@@ -18,6 +18,16 @@ namespace cli
         return "   "  + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
     }
 
+    INLINE void Command::addOption(const std::string& str, const std::string& desc)
+    {
+        if (str.empty())
+            throw std::invalid_argument("command is empty ");
+        if (desc.empty())
+            throw std::invalid_argument("must be description for help");
+        if (str[0] != '-')
+            throw std::invalid_argument("options must start with hyphen, use subcommands instead");
+    }
+
     INLINE void Command::execute()
     {
         if (!handler)
@@ -46,6 +56,11 @@ namespace cli
             positionalArgs.push_back(args[i]);
     }
 
+    INLINE void Command::setHandler(const Action& handler)
+    {
+        this->handler = handler;
+    }
+
     INLINE Command* Subcategory::addSubcomand(const Action& func, std::string str, const std::string& desc)
     {
         if (str.empty())
@@ -70,16 +85,6 @@ namespace cli
             app->commandsMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
-    }
-
-    INLINE void Subcategory::addOption(const std::string& str, const std::string& desc)
-    {
-        if (str.empty())
-            throw std::invalid_argument("command is empty ");
-        if (desc.empty())
-            throw std::invalid_argument("must be subcategory description for help");
-        if (str[0] != '-')
-            throw std::invalid_argument("options must start with hyphen, use subcommands instead");
     }
 
     INLINE std::string Subcategory::to_string() const
@@ -160,7 +165,7 @@ namespace cli
             throw std::runtime_error("help not exists, use app.initHelp();");
         if (args.size() < 2)
         {
-            help(it->second);
+            mainCommand->execute();
             return;
         }
         it = commandsMap.find(args[1]);
@@ -295,6 +300,16 @@ namespace cli
         }
     }
 
+    INLINE void Application::mainCommandStub(Command* command)
+    {
+        if (cmdDepth == 0)
+        {
+            std::cout << "stub command, use:" << std::endl << std::endl;
+            std::cout << "  auto mainCommand = app.mainCommand;" << std::endl;
+            std::cout << "  mainCommand->setHandler(mainHandler);" << std::endl;
+        } else
+            help(command);
+    }
 
     INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
         const std::string& name, int &arg, int min, int max)
@@ -308,12 +323,18 @@ namespace cli
                 name.c_str(), arg, min, max));
     }
 
-    INLINE void Application::initHelp()
+    INLINE void Application::initSystemCommands()
     {
-        Action action = [](const Application* app, Command* cmd) {
+        Action actionStub = [](Application* app, Command* cmd) {
+            app->mainCommandStub(cmd);
+        };
+        mainCommand = std::make_shared<Command>(actionStub, appName, appName);
+        mainCommand->app = this;
+
+        Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
-        addSubcomand(action, "help", "Display help information about " + appName);
+        addSubcomand(actionHelp, "help", "Display help information about " + appName);
     }
 
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))
@@ -325,7 +346,7 @@ namespace cli
         setArg(args, "combineOpts", combineOpts, 0, 1);
         setArg(args, "helpAtStart", helpAtStart, 0, 1);
         setArg(args, "diagnostic", diagnostic, 0, 1);
-        initHelp();
+        initSystemCommands();
     }
 
     INLINE std::vector<std::string> Application::findMostSimilar(const std::string& command, const std::map<std::string, Command*> &commands)
