@@ -17,5 +17,5 @@ namespace cli
 
     void printTree(const Node& node, const std::string& prefix = "", bool isLastSibling = true);
 
-    [[nodiscard]] std::string format_message(const char* fmt, ...);
+    [[nodiscard]] std::string fmt(const char* format_str, ...);
 }

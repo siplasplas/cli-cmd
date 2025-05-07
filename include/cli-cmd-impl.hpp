@@ -27,14 +27,14 @@ namespace cli
 
     INLINE void Command::print()
     {
-        Node root(format_message("Command [%s]", name.c_str()));
-        Node* positional = root.add(Node(format_message("Positional args: (min: %d, max: %d)",
+        Node root(fmt("Command [%s]", name.c_str()));
+        Node* positional = root.add(Node(fmt("Positional args: (min: %d, max: %d)",
             positionalLimit.min, positionalLimit.max)));
         for (const auto& arg: positionalArgs)
         {
             positional->add(Node(arg));
         }
-        Node* options = root.add(Node("Options"));
+        root.add(Node("Options"));
         printTree(root);
     }
 
@@ -251,7 +251,7 @@ namespace cli
             return;
         arg =stoi(value);
         if (arg < min || arg > max)
-            throw std::invalid_argument(format_message("%s is %d and must be between %d and %d",
+            throw std::invalid_argument(fmt("%s is %d and must be between %d and %d",
                 name.c_str(), arg, min, max));
     }
 

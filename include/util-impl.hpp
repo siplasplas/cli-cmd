@@ -8,7 +8,7 @@ namespace cli
     /**
      * @brief Formats a message using printf-style syntax (temporary implementation)
      *
-     * @param fmt Format string (printf-style)
+     * @param format_str Format string (printf-style)
      * @param ... Variable arguments matching the format specifiers
      *
      * @return std::string Formatted message
@@ -24,11 +24,11 @@ namespace cli
      *
      * @throws std::runtime_error if formatting fails
      */
-    INLINE std::string format_message(const char* fmt, ...) {
+    INLINE std::string fmt(const char* format_str, ...) {
         // First call - get required length
         va_list args;
-        va_start(args, fmt);
-        const int length = vsnprintf(nullptr, 0, fmt, args);
+        va_start(args, format_str);
+        const int length = vsnprintf(nullptr, 0, format_str, args);
         va_end(args);
 
         if (length < 0) {
@@ -39,8 +39,8 @@ namespace cli
         std::vector<char> buf(length + 1); // +1 for null terminator
 
         // Second call - actual formatting
-        va_start(args, fmt);
-        vsnprintf(buf.data(), buf.size(), fmt, args);
+        va_start(args, format_str);
+        vsnprintf(buf.data(), buf.size(), format_str, args);
         va_end(args);
 
         return std::string(buf.data());
