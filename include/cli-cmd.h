@@ -1,7 +1,9 @@
 #pragma once
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -13,11 +15,6 @@ namespace cli
     class Application;
     class Command;
 
-    struct PositionalArgsLimits {
-        size_t min;
-        size_t max;
-    };
-
     using Action = std::function<void(Application*, Command*)>;
 
     class Flag
@@ -26,27 +23,55 @@ namespace cli
     public:
         Flag(std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)) {}
-        std::string to_string() const;
+        [[nodiscard]] std::string to_string() const;
+    };
+
+    struct Argument
+    {
+        std::string name;
+        std::string type;
+        Argument(std::string name, std::string type): name(std::move(name)), type(std::move(type)) {}
+    };
+
+    struct ArgumentValue
+    {
+        Argument argument;
+        std::string value;
+        ArgumentValue(Argument argument, std::string value):
+            argument(std::move(argument)), value(std::move(value)) {}
+    };
+
+    struct VaArguments
+    {
+        Argument argument;
+        size_t min_n;
+        size_t max_n;
+        VaArguments(Argument argument, size_t min_n, size_t max_n):
+                    argument(std::move(argument)), min_n(min_n), max_n(max_n){}
     };
 
     class Command {
         const std::string name, desc;
-        PositionalArgsLimits positionalLimit{0, 0};
-        Action handler;
+        Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
         std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
         std::vector<std::string> ignoredFlags;
+        std::vector<Argument> formalArgList;
+        std::optional<VaArguments> formalVaArgs;
     public:
         Command(Action handler, std::string name,  std::string desc):
-            name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
+            name(std::move(name)), desc(std::move(desc)), m_handler(std::move(handler)) {}
         void setHandler(const Action& handler);
         bool containsFlag(const std::string &opt);
         Application* app = nullptr;
-        std::vector<std::string> positionalArgs;
+        std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
-        std::string to_string() const;
-        void setPositionalArgsLimits(size_t min, size_t max);
+        [[nodiscard]] std::string to_string() const;
+        Command& handler(const Action& _handler);
+        Command& addArg(std::string name, std::string type);
+        Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
+        Command& addArgs(std::string name, std::string type, size_t min_n);
         void addFlag(const std::string& str, const std::string& desc);
         void execute();
         void print() const;
@@ -60,7 +85,7 @@ namespace cli
         friend class Application;
     public:
         Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
-        std::string to_string() const;
+        [[nodiscard]] std::string to_string() const;
         Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
     };
 
@@ -189,6 +214,7 @@ namespace cli
         void run(int argc, char** argv);
         Command* addSubcomand(const Action& func, const std::string& str, const std::string& desc);
         Category* addCategory(const std::string& caption);
+        Command& addCommand(std::string name, const std::string& desc);
     };
 
 }

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <sstream>
 #include <unordered_map>
+#include <utility>
 
 #include "cli-cmd.h"
 #include "distance-impl.hpp"
@@ -10,10 +11,6 @@
 
 namespace cli
 {
-    INLINE void Command::setPositionalArgsLimits(size_t min, size_t max) {
-        positionalLimit = {min, max};
-    }
-
     INLINE std::string Command::to_string() const
     {
         std::string indent(3, ' ');
@@ -27,6 +24,32 @@ namespace cli
             }
         }
         return result;
+    }
+
+    INLINE Command& Command::handler(const Action& _handler)
+    {
+        m_handler = _handler;
+        return *this;
+    }
+
+    INLINE Command& Command::addArg(std::string name, std::string type)
+    {
+        Argument argument(std::move(name), std::move(type));
+        formalArgList.push_back(argument);
+        return *this;
+    }
+
+    INLINE Command& Command::addArgs(std::string name, std::string type, size_t min_n, size_t max_n)
+    {
+        Argument argument(std::move(name), std::move(type));
+        VaArguments argVa(std::move(argument), min_n, max_n);
+        this->formalVaArgs = argVa;
+        return *this;
+    }
+
+    INLINE Command& Command::addArgs(std::string name, std::string type, size_t min_n)
+    {
+        return addArgs(std::move(name), std::move(type), min_n, std::numeric_limits<size_t>::max());
     }
 
     INLINE void Command::addFlag(const std::string& str, const std::string& desc)
@@ -58,20 +81,26 @@ namespace cli
             }
             std::cout << "]" << std::endl;
         }
-        if (!handler)
+        if (!m_handler)
             std::cout << "Placeholder for [" << name << "]: command not set" << std::endl;
         else
-            handler(app, this);
+            m_handler(app, this);
     }
 
     INLINE void Command::print() const
     {
         Node root(fmt("Command [%s]", name.c_str()));
-        Node* positional = root.add(Node(fmt("Positional args: (min: %d, max: %d)",
-            positionalLimit.min, positionalLimit.max)));
-        for (const auto& arg: positionalArgs)
+        Node* positional = root.add(Node(fmt("Positional args: (size: %d)",
+            formalArgList.size())));
+        for (const auto& arg: formalArgList)
         {
-            positional->add(Node(arg));
+            positional->add(Node(arg.name + " : " + arg.type));
+        }
+        if (formalVaArgs.has_value())
+        {
+            positional = root.add(Node(fmt("VarPositional args: (min: %d, max: %d)",
+                        formalVaArgs.value().min_n, formalVaArgs.value().max_n)));
+            positional->add(Node(formalVaArgs.value().argument.name + " : " + formalVaArgs.value().argument.type));
         }
         Node* flags = root.add(Node("Flags"));
         for (const auto& arg: flagSet)
@@ -90,7 +119,8 @@ namespace cli
 
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
-        positionalArgs.clear();
+        arguments.clear();
+        size_t count = 0, vacount = 0;
         for (size_t i = start; i < args.size(); i++)
         {
             auto arg = args[i];
@@ -103,21 +133,30 @@ namespace cli
                     ignoredFlags.push_back(arg);
             }
             else
-                positionalArgs.push_back(args[i]);
+            {
+                if (count < formalArgList.size())
+                {
+                    Argument &formalArgument = formalArgList[count++];
+                    arguments.emplace_back(formalArgument, arg);
+                } else
+                {
+                    Argument &formalArgument = formalVaArgs->argument;
+                    arguments.emplace_back(formalArgument, arg);
+                    vacount++;
+                }
+            }
         }
-
-        size_t actualPositionalArgsCount = positionalArgs.size();
-        if (actualPositionalArgsCount < positionalLimit.min)
-            std::cout << app->appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                " arguments but minimal is " << positionalLimit.min << std::endl;
-        else if (actualPositionalArgsCount > positionalLimit.max)
-            std::cout << app->appName << ": " << args[1] << " have " << actualPositionalArgsCount <<
-                " arguments but maximal is " << positionalLimit.max << std::endl;
-        else if (!handler)
+        if (arguments.size() < formalArgList.size() + formalVaArgs->min_n)
+            std::cout << app->appName << ": " << name << " have " << arguments.size() <<
+                " arguments but minimal is " << formalArgList.size() + formalVaArgs->min_n << std::endl;
+        else if (arguments.size() > formalArgList.size() + formalVaArgs->max_n)
+            std::cout << app->appName << ": " << name << " have " << arguments.size() <<
+                " arguments but maximal is " << formalArgList.size() + formalVaArgs->max_n << std::endl;
+        else if (!m_handler)
         {
-            std::cout << app->appName << ": '" << args[1] << "is placeholder with positional arguments:";
-            for (const auto& arg : positionalArgs)
-                std::cout << arg << " ";
+            std::cout << app->appName << ": " << args[1] << " is placeholder with positional arguments:\n";
+            for (const auto& arg : arguments)
+                std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
         } else
         {
             if (app->diagnostic == 1)
@@ -129,7 +168,7 @@ namespace cli
 
     INLINE void Command::setHandler(const Action& handler)
     {
-        this->handler = handler;
+        this->m_handler = handler;
     }
 
     inline bool Command::containsFlag(const std::string& opt)
@@ -289,8 +328,10 @@ namespace cli
             if (args[1] == "help")
             {
                 auto cmdHelp = getCommand("help");
-                cmdHelp->positionalArgs.clear();
-                cmdHelp->positionalArgs.push_back(appName);
+                cmdHelp->arguments.clear();
+                Argument argument("command","");
+                ArgumentValue avalue(argument, appName);
+                cmdHelp->arguments.push_back(avalue);
                 help(cmdHelp);
                 return;
             }
@@ -330,6 +371,17 @@ namespace cli
             commandMap.emplace(str, commands.back().get());
             return commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
+    }
+
+    INLINE Command& Application::addCommand(std::string name, const std::string& desc)
+    {
+        if (commandMap.find(name) == commandMap.end()) {
+            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, name, desc);
+            command->app = this;
+            commands.push_back(command);
+            commandMap.emplace(name, commands.back().get());
+            return *commands.back().get();
+        } else throw std::runtime_error("command already exist: " + name);
     }
 
     /**
@@ -404,12 +456,12 @@ namespace cli
 
     INLINE void Application::commandHelp(Command* cmdHelp) const
     {
-        auto arg = cmdHelp->positionalArgs[0];
-        auto it = commandMap.find(arg);
+        auto arg = cmdHelp->arguments[0];
+        auto it = commandMap.find(arg.value);
         if (it == commandMap.end())
         {
-            std::cout << fmt("command [%s] not exists", arg.c_str()) << std::endl;
-            proposeSimilar(arg);
+            std::cout << fmt("command [%s] not exists", arg.value.c_str()) << std::endl;
+            proposeSimilar(arg.value);
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
@@ -421,7 +473,7 @@ namespace cli
 
     INLINE void Application::help(Command* cmdHelp) const
     {
-        if (cmdHelp->positionalArgs.empty())
+        if (cmdHelp->arguments.empty())
             printCommands(cmdHelp);
         else
             commandHelp(cmdHelp);
@@ -452,19 +504,22 @@ namespace cli
 
     INLINE void Application::initSystemCommands()
     {
-        Action actionStub = [](Application* app, Command* cmd) {
-            app->mainCommandStub(cmd);
-        };
-        mainCommand = std::make_shared<Command>(actionStub, appName, appName);
-        mainCommand->app = this;
-        commands.push_back(mainCommand);
-        commandMap.emplace(appName, commands.back().get());
+        if (cmdDepth == 0)
+        {
+            Action actionStub = [](Application* app, Command* cmd) {
+                app->mainCommandStub(cmd);
+            };
+            mainCommand = std::make_shared<Command>(actionStub, appName, appName);
+            mainCommand->app = this;
+            commands.push_back(mainCommand);
+            commandMap.emplace(appName, commands.back().get());
+        }
 
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
         auto helpCmd = addSubcomand(actionHelp, "help", "Display help information about " + appName);
-        helpCmd->setPositionalArgsLimits(0, 1);
+        helpCmd->addArgs("command", "", 0, 1);
         if (cmdDepth==3)
             helpCmd->addFlag("--all", "all commands");
     }

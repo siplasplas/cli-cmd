@@ -8,7 +8,7 @@ void addStartSubcategory(cli::Category *category)
 {
     auto sub = category->addSubcategory("start a working area (see also: git help tutorial)");
     auto cmd = sub->addSubcomand(nullptr, "clone", "Clone a repository into a new directory");
-    cmd->setPositionalArgsLimits(1, 1);
+    cmd->addArg("repository", "url");
     sub->addSubcomand(nullptr, "init", "Create an empty Git repository or reinitialize an existing one");
 }
 
