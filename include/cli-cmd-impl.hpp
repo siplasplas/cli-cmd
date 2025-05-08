@@ -14,8 +14,8 @@ namespace cli
     INLINE std::string Command::to_string() const
     {
         std::string indent(3, ' ');
-        std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
-        if (name == "help")
+        std::string result =  indent + m_name + std::string(std::max(1, 10 - static_cast<int>(m_name.size())), ' ') + m_desc;
+        if (m_name == "help")
         {
             if (app->cmdDepth == 3)
             {
@@ -29,6 +29,12 @@ namespace cli
     INLINE Command& Command::handler(const Action& _handler)
     {
         m_handler = _handler;
+        return *this;
+    }
+
+    inline Command& Command::desc(const std::string& _desc)
+    {
+        m_desc = _desc;
         return *this;
     }
 
@@ -62,7 +68,7 @@ namespace cli
             throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
         if (availableFlagMap.find(str) != availableFlagMap.end()) {
             throw std::invalid_argument(fmt("flag %s already exists for command %s",
-                str.c_str(), name.c_str()));
+                str.c_str(), m_name.c_str()));
         }
         auto flag = std::make_shared<Flag>(str, desc);
         availableFlagMap[str] = flag;
@@ -82,14 +88,14 @@ namespace cli
             std::cout << "]" << std::endl;
         }
         if (!m_handler)
-            std::cout << "Placeholder for [" << name << "]: command not set" << std::endl;
+            std::cout << "Placeholder for [" << m_name << "]: command not set" << std::endl;
         else
             m_handler(app, this);
     }
 
     INLINE void Command::print() const
     {
-        Node root(fmt("Command [%s]", name.c_str()));
+        Node root(fmt("Command [%s]", m_name.c_str()));
         Node* positional = root.add(Node(fmt("Positional args: (size: %d)",
             formalArgList.size())));
         for (const auto& arg: formalArgList)
@@ -147,10 +153,10 @@ namespace cli
             }
         }
         if (arguments.size() < formalArgList.size() + formalVaArgs->min_n)
-            std::cout << app->appName << ": " << name << " have " << arguments.size() <<
+            std::cout << app->appName << ": " << m_name << " have " << arguments.size() <<
                 " arguments but minimal is " << formalArgList.size() + formalVaArgs->min_n << std::endl;
         else if (arguments.size() > formalArgList.size() + formalVaArgs->max_n)
-            std::cout << app->appName << ": " << name << " have " << arguments.size() <<
+            std::cout << app->appName << ": " << m_name << " have " << arguments.size() <<
                 " arguments but maximal is " << formalArgList.size() + formalVaArgs->max_n << std::endl;
         else if (!m_handler)
         {
@@ -166,24 +172,19 @@ namespace cli
         }
     }
 
-    INLINE void Command::setHandler(const Action& handler)
-    {
-        this->m_handler = handler;
-    }
-
     inline bool Command::containsFlag(const std::string& opt)
     {
         return flagSet.find(opt) != flagSet.end();
     }
 
-    INLINE Command& Category::addCommand(std::string str, const std::string& desc)
+    INLINE Command& Category::addCommand(std::string str)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, str, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(str);
             command->app = app;
             commands.push_back(command);
             app->commandMap.emplace(str, commands.back().get());
@@ -203,14 +204,14 @@ namespace cli
         return subcategories.back().get();
     }
 
-    INLINE Command& Subcategory::addCommand(std::string str, const std::string& desc)
+    INLINE Command& Subcategory::addCommand(std::string str)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, str, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(str);
             command->app = app;
             commands.push_back(command);
             app->commandMap.emplace(str, commands.back().get());
@@ -361,10 +362,10 @@ namespace cli
         parse(args);
     }
 
-    INLINE Command& Application::addCommand(std::string name, const std::string& desc)
+    INLINE Command& Application::addCommand(std::string name)
     {
         if (commandMap.find(name) == commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, name, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(name);
             command->app = this;
             commands.push_back(command);
             commandMap.emplace(name, commands.back().get());
@@ -430,7 +431,7 @@ namespace cli
 
                     std::sort(all_cmds.begin(), all_cmds.end(),
                         [](const std::shared_ptr<Command>& a, const std::shared_ptr<Command>& b) {
-                            return a->name < b->name;
+                            return a->m_name < b->m_name;
                         });
 
                     std::cout << std::endl << category_ptr->description << std::endl;
@@ -497,7 +498,9 @@ namespace cli
             Action actionStub = [](Application* app, Command* cmd) {
                 app->mainCommandStub(cmd);
             };
-            mainCommand = std::make_shared<Command>(actionStub, appName, appName);
+            mainCommand = std::make_shared<Command>(appName);
+            mainCommand->desc(appName);
+            mainCommand->handler(actionStub);
             mainCommand->app = this;
             commands.push_back(mainCommand);
             commandMap.emplace(appName, commands.back().get());
@@ -506,7 +509,7 @@ namespace cli
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
-        auto helpCmd = addCommand("help", "Display help information about " + appName).handler(actionHelp)
+        auto helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
                 .addArgs("command", "", 0, 1);
         if (cmdDepth==3)
             helpCmd.addFlag("--all", "all commands");

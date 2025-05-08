@@ -51,7 +51,7 @@ namespace cli
     };
 
     class Command {
-        const std::string name, desc;
+        std::string m_name, m_desc;
         Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
@@ -60,15 +60,14 @@ namespace cli
         std::vector<Argument> formalArgList;
         std::optional<VaArguments> formalVaArgs;
     public:
-        Command(Action handler, std::string name,  std::string desc):
-            name(std::move(name)), desc(std::move(desc)), m_handler(std::move(handler)) {}
-        void setHandler(const Action& handler);
+        Command(std::string name): m_name(std::move(name)) {}
         bool containsFlag(const std::string &opt);
         Application* app = nullptr;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
         [[nodiscard]] std::string to_string() const;
         Command& handler(const Action& _handler);
+        Command& desc(const std::string& _desc);
         Command& addArg(std::string name, std::string type);
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
@@ -86,7 +85,7 @@ namespace cli
     public:
         Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
         [[nodiscard]] std::string to_string() const;
-        Command& addCommand(std::string str, const std::string& desc);
+        Command& addCommand(std::string str);
     };
 
     class Category
@@ -104,7 +103,7 @@ namespace cli
         Category& operator=(Category&&) = default;
         std::string to_string();
         Subcategory* addSubcategory(std::string caption);
-        Command& addCommand(std::string str, const std::string& desc);
+        Command& addCommand(std::string str);
     };
 
     class Application {
@@ -213,7 +212,7 @@ namespace cli
         void parse(const std::string& line);
         void run(int argc, char** argv);
         Category* addCategory(const std::string& caption);
-        Command& addCommand(std::string name, const std::string& desc);
+        Command& addCommand(std::string name);
     };
 
 }

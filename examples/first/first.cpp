@@ -9,7 +9,7 @@ void clone_(cli::Application*, cli::Command* commad)
 
 int main(int argc, char** argv) {
     cli::Application app("first");
-    app.addCommand("clone", "Clone a repository into a new directory").handler(clone_)
+    app.addCommand("clone").desc("Clone a repository into a new directory").handler(clone_)
             .addArg("repository", "url").addArgs("directory", "path", 0, 1);
     app.run(argc, argv);
     return 0;

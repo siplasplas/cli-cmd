@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     addDeveloperFacing(app);
     addExternalCommands(app);
     auto cloneCmd = app.getCommand("clone");
-    cloneCmd->setHandler(clone_);
+    cloneCmd->handler(clone_);
     cloneCmd->addFlag("-v", "be more verbose");
     cloneCmd->addFlag("-q", "be more quiet");
     app.run(argc, argv);
