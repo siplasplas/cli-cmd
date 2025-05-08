@@ -29,32 +29,32 @@ namespace cli
         return result;
     }
 
-    INLINE void Command::addOption(const std::string& str, const std::string& desc)
+    INLINE void Command::addFlag(const std::string& str, const std::string& desc)
     {
         if (str.empty())
             throw std::invalid_argument("command is empty ");
         if (desc.empty())
             throw std::invalid_argument("must be description for help");
         if (str[0] != '-')
-            throw std::invalid_argument("options must start with hyphen, use subcommands instead");
-        if (availableOptionMap.find(str) != availableOptionMap.end()) {
-            throw std::invalid_argument(fmt("option %s already exists for command %s",
+            throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
+        if (availableFlagMap.find(str) != availableFlagMap.end()) {
+            throw std::invalid_argument(fmt("flag %s already exists for command %s",
                 str.c_str(), name.c_str()));
         }
-        auto option = std::make_shared<Option>(str, desc);
-        availableOptionMap[str] = option;
+        auto flag = std::make_shared<Flag>(str, desc);
+        availableFlagMap[str] = flag;
     }
 
     INLINE void Command::execute()
     {
-        if (!ignoredOptions.empty())
+        if (!ignoredFlags.empty())
         {
-            std::cout << "ignored options: [";
-            for (size_t i = 0; i < ignoredOptions.size(); ++i)
+            std::cout << "ignored flags: [";
+            for (size_t i = 0; i < ignoredFlags.size(); ++i)
             {
                 if (i>0)
                     std::cout << " ";
-                std::cout << ignoredOptions[i];
+                std::cout << ignoredFlags[i];
             }
             std::cout << "]" << std::endl;
         }
@@ -73,15 +73,15 @@ namespace cli
         {
             positional->add(Node(arg));
         }
-        Node* options = root.add(Node("Options"));
-        for (const auto& arg: optionSet)
+        Node* flags = root.add(Node("Flags"));
+        for (const auto& arg: flagSet)
         {
-            options->add(Node(arg));
+            flags->add(Node(arg));
         }
         printTree(root);
     }
 
-    inline std::string Option::to_string() const
+    inline std::string Flag::to_string() const
     {
         std::string indent(3, ' ');
         std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
@@ -97,10 +97,10 @@ namespace cli
             assert(!arg.empty());
             if (arg[0]=='-')
             {
-                if (availableOptionMap.find(arg)  != availableOptionMap.end())
-                    optionSet.insert(arg);
+                if (availableFlagMap.find(arg)  != availableFlagMap.end())
+                    flagSet.insert(arg);
                 else
-                    ignoredOptions.push_back(arg);
+                    ignoredFlags.push_back(arg);
             }
             else
                 positionalArgs.push_back(args[i]);
@@ -132,9 +132,9 @@ namespace cli
         this->handler = handler;
     }
 
-    inline bool Command::containsOption(const std::string& opt)
+    inline bool Command::containsFlag(const std::string& opt)
     {
-        return optionSet.find(opt) != optionSet.end();
+        return flagSet.find(opt) != flagSet.end();
     }
 
     INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
@@ -344,7 +344,7 @@ namespace cli
      */
     INLINE void Application::printCommands(Command* cmdHelp) const
     {
-        const bool bAll = cmdHelp->containsOption("--all");
+        const bool bAll = cmdHelp->containsFlag("--all");
 
         if (cmdDepth <= 1) {
             for (const auto& cmd : commands) {
@@ -413,7 +413,7 @@ namespace cli
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
-        for (const auto& [key, opt] : cmd->availableOptionMap) {
+        for (const auto& [key, opt] : cmd->availableFlagMap) {
             std::cout << opt->to_string() << std::endl;
         }
     }
@@ -466,7 +466,7 @@ namespace cli
         auto helpCmd = addSubcomand(actionHelp, "help", "Display help information about " + appName);
         helpCmd->setPositionalArgsLimits(0, 1);
         if (cmdDepth==3)
-            helpCmd->addOption("--all", "all commands");
+            helpCmd->addFlag("--all", "all commands");
     }
 
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))

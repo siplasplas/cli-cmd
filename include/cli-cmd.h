@@ -20,11 +20,11 @@ namespace cli
 
     using Action = std::function<void(Application*, Command*)>;
 
-    class Option
+    class Flag
     {
         const std::string name, desc;
     public:
-        Option(std::string name,  std::string desc):
+        Flag(std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)) {}
         std::string to_string() const;
     };
@@ -35,19 +35,19 @@ namespace cli
         Action handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
-        std::map<std::string, std::shared_ptr<Option>> availableOptionMap;
-        std::vector<std::string> ignoredOptions;
+        std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
+        std::vector<std::string> ignoredFlags;
     public:
         Command(Action handler, std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)), handler(std::move(handler)) {}
         void setHandler(const Action& handler);
-        bool containsOption(const std::string &opt);
+        bool containsFlag(const std::string &opt);
         Application* app = nullptr;
         std::vector<std::string> positionalArgs;
-        std::set<std::string> optionSet;
+        std::set<std::string> flagSet;
         std::string to_string() const;
         void setPositionalArgsLimits(size_t min, size_t max);
-        void addOption(const std::string& str, const std::string& desc);
+        void addFlag(const std::string& str, const std::string& desc);
         void execute();
         void print() const;
     };
