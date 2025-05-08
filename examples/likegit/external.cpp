@@ -7,5 +7,5 @@
 void addExternalCommands(cli::Application &app)
 {
     auto category = app.addCategory("External commands");
-    category->addSubcomand(nullptr, "latexdiff","");
+    category->addCommand("latexdiff","");
 }

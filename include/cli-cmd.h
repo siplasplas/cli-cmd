@@ -86,7 +86,7 @@ namespace cli
     public:
         Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
         [[nodiscard]] std::string to_string() const;
-        Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
+        Command& addCommand(std::string str, const std::string& desc);
     };
 
     class Category
@@ -104,7 +104,7 @@ namespace cli
         Category& operator=(Category&&) = default;
         std::string to_string();
         Subcategory* addSubcategory(std::string caption);
-        Command* addSubcomand(const Action& func, std::string str, const std::string& desc);
+        Command& addCommand(std::string str, const std::string& desc);
     };
 
     class Application {
@@ -212,7 +212,6 @@ namespace cli
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
         void run(int argc, char** argv);
-        Command* addSubcomand(const Action& func, const std::string& str, const std::string& desc);
         Category* addCategory(const std::string& caption);
         Command& addCommand(std::string name, const std::string& desc);
     };

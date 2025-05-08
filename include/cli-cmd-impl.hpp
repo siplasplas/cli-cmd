@@ -176,18 +176,18 @@ namespace cli
         return flagSet.find(opt) != flagSet.end();
     }
 
-    INLINE Command* Category::addSubcomand(const Action& func, std::string str, const std::string& desc)
+    INLINE Command& Category::addCommand(std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, str, desc);
             command->app = app;
             commands.push_back(command);
             app->commandMap.emplace(str, commands.back().get());
-            return commands.back().get();
+            return *commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
 
@@ -203,18 +203,18 @@ namespace cli
         return subcategories.back().get();
     }
 
-    INLINE Command* Subcategory::addSubcomand(const Action& func, std::string str, const std::string& desc)
+    INLINE Command& Subcategory::addCommand(std::string str, const std::string& desc)
     {
         if (str.empty())
             throw std::runtime_error("command is empty ");
         if (str[0] == '-')
             throw std::runtime_error("command can't start with hyphen, use options or flags instead");
         if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
+            std::shared_ptr<Command> command = std::make_shared<Command>(nullptr, str, desc);
             command->app = app;
             commands.push_back(command);
             app->commandMap.emplace(str, commands.back().get());
-            return commands.back().get();
+            return *commands.back().get();
         } else throw std::runtime_error("command already exist: " + str);
     }
 
@@ -359,18 +359,6 @@ namespace cli
     {
         std::vector<std::string> args(argv, argv + argc);
         parse(args);
-    }
-
-
-    INLINE Command* Application::addSubcomand(const Action& func, const std::string& str, const std::string& desc)
-    {
-        if (commandMap.find(str) == commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(func, str, desc);
-            command->app = this;
-            commands.push_back(command);
-            commandMap.emplace(str, commands.back().get());
-            return commands.back().get();
-        } else throw std::runtime_error("command already exist: " + str);
     }
 
     INLINE Command& Application::addCommand(std::string name, const std::string& desc)
@@ -518,10 +506,10 @@ namespace cli
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
-        auto helpCmd = addSubcomand(actionHelp, "help", "Display help information about " + appName);
-        helpCmd->addArgs("command", "", 0, 1);
+        auto helpCmd = addCommand("help", "Display help information about " + appName).handler(actionHelp)
+                .addArgs("command", "", 0, 1);
         if (cmdDepth==3)
-            helpCmd->addFlag("--all", "all commands");
+            helpCmd.addFlag("--all", "all commands");
     }
 
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))
