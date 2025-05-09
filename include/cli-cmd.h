@@ -15,6 +15,10 @@ namespace cli
     class Application;
     class Command;
 
+    inline const char* errorMsg1 = "%s : %s is placeholder with positional arguments:";
+    inline const char* errorMsg2 = "%s : %s have %d arguments but minimal is %d";
+    inline const char* errorMsg3 = "%s : %s have %d arguments but maximal is %d";
+
     using Action = std::function<void(const Actual*)>;
 
     class Flag
@@ -57,6 +61,8 @@ namespace cli
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
+        int errNumber = 0;
+        std::optional<std::string> errorStr;
     };
 
     struct Formal
@@ -209,7 +215,9 @@ namespace cli
             : Application(std::move(app_name), "") {}
         std::string appName;
         std::shared_ptr<Command> mainCommand;
-        Command* getCommand(const std::string& name);
+        std::shared_ptr<Command> currentCommand;
+        void execute();
+        std::shared_ptr<Command> getCommand(const std::string& name);
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
         void parse(int argc, char** argv);

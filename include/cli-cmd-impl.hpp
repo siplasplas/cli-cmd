@@ -94,10 +94,18 @@ namespace cli
             }
             std::cout << "]" << std::endl;
         }
-        if (!m_handler)
-            std::cout << "Placeholder for [" << m_name << "]: command not set" << std::endl;
+        if (actual.errNumber)
+        {
+            if (actual.errorStr)
+                std::cout << *actual.errorStr << std::endl;
+            if (actual.errNumber == 1)
+                for (const auto& arg : actual.arguments)
+                    std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
+        }
         else
+        {
             m_handler(&this->actual);
+        }
     }
 
     INLINE void Command::print() const
@@ -160,22 +168,23 @@ namespace cli
             }
         }
         if (actual.arguments.size() < formal.argList.size() + formal.vaArgs->min_n)
-            std::cout << app->appName << ": " << m_name << " have " << actual.arguments.size() <<
-                " arguments but minimal is " << formal.argList.size() + formal.vaArgs->min_n << std::endl;
+        {
+            actual.errNumber = 2;
+            actual.errorStr = fmt(errorMsg2,
+                app->appName.c_str(), m_name.c_str(), actual.arguments.size(),
+                formal.argList.size() + formal.vaArgs->min_n);
+        }
         else if (actual.arguments.size() > formal.argList.size() + formal.vaArgs->max_n)
-            std::cout << app->appName << ": " << m_name << " have " << actual.arguments.size() <<
-                " arguments but maximal is " << formal.argList.size() + formal.vaArgs->max_n << std::endl;
+        {
+            actual.errNumber = 3;
+            actual.errorStr = fmt(errorMsg3,
+                            app->appName.c_str(), m_name.c_str(), actual.arguments.size(),
+                            formal.argList.size() + formal.vaArgs->max_n);
+        }
         else if (!m_handler)
         {
-            std::cout << app->appName << ": " << args[1] << " is placeholder with positional arguments:\n";
-            for (const auto& arg : actual.arguments)
-                std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
-        } else
-        {
-            if (app->diagnostic == 1)
-                print();
-            else
-                execute();
+            actual.errNumber = 1;
+            actual.errorStr = fmt(errorMsg1,app->appName.c_str(),m_name.c_str());
         }
     }
 
@@ -281,11 +290,17 @@ namespace cli
         return *helpCategories.back().get();
     }
 
-    INLINE Command* Application::getCommand(const std::string& name)
+    INLINE void Application::execute()
+    {
+        if (currentCommand)
+            currentCommand->execute();
+    }
+
+    INLINE std::shared_ptr<Command> Application::getCommand(const std::string& name)
     {
         auto it = commandMap.find(name);
         if (it != commandMap.end()) {
-            return it->second.get();
+            return it->second;
         } else
             throw std::runtime_error("command not found: " + name);
     }
@@ -318,14 +333,14 @@ namespace cli
     {
         auto it = commandMap.find("help");
         if (it == commandMap.end())
-            throw std::runtime_error("help not exists, use app.initHelp();");
+            throw std::runtime_error("help not exists");
         if (args.size() < 2)
         {
             if (mainCommand)
-                mainCommand->execute();
+                currentCommand = mainCommand;
             else
             {   auto helpCommand = getCommand("help");
-                helpCommand->execute();
+                currentCommand = helpCommand;
             }
             return;
         }
@@ -342,7 +357,6 @@ namespace cli
                 ArgumentValue argValue(argument, appName);
                 cmdHelp->actual.arguments.push_back(argValue);
                 help(&cmdHelp->actual);
-                return;
             }
         }
         else
@@ -350,13 +364,15 @@ namespace cli
             start = 2;
             it = commandMap.find(args[1]);
             if (it == commandMap.end())
+            {
                 commandNotFound(args[1]);
+            }
             else
+            {
                 command = it->second;
+                command->parse(start, args);
+            }
         }
-        if (!command)
-            return;
-        command->parse(start, args);
     }
 
     INLINE void Application::parse(const std::string& line)
@@ -373,6 +389,7 @@ namespace cli
     INLINE void Application::run(int argc, char** argv)
     {
         parse(argc, argv);
+        execute();
     }
 
     INLINE Command& Application::addCommand(std::string name)
