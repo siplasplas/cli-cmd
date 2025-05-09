@@ -25,7 +25,7 @@ std::unique_ptr<cli::Application> makeAppWithClone() {
     return app;
 }
 
-TEST(CliCmdTest, CloneCommandFormalDescription) {
+TEST(CliCmdTest, ArgumentsFormalDescription) {
     auto app = makeAppWithClone();
 
     json expectedFormal = R"({
@@ -47,7 +47,7 @@ TEST(CliCmdTest, CloneCommandFormalDescription) {
     expectJsonEqual(expectedFormal, formal);
 }
 
-TEST(CliCmdTest, CloneCommandActualParsing) {
+TEST(CliCmdTest, ArgumentsActualParsing) {
     auto app = makeAppWithClone();
 
     app->parse("myapp clone path -v -a -b -a");

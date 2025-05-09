@@ -82,7 +82,7 @@ gtest_dep = dependency('gtest', required: true)
 gtest_main = dependency('gtest_main', required: true)
 
 test_sources = files(
-  'tests/test_clone_command.cpp',
+  'tests/test_arguments.cpp',
 )
 
 test_exe = executable(
