@@ -3,6 +3,7 @@
 #else
 #include "cli-cmd.h"
 #endif
+#include <iostream>
 
 void addPorcelainCommands(cli::Application &app);
 void addManipulators(cli::Application &app);

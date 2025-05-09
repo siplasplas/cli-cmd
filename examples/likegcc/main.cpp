@@ -3,6 +3,7 @@
 #else
 #include "cli-cmd.h"
 #endif
+#include <iostream>
 
 void addOptions(cli::Command *cmd);
 

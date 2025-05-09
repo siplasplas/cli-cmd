@@ -1,13 +1,15 @@
 #pragma once
 #include <algorithm>
 #include <cassert>
+#include <iostream>
+#include <limits>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 
 #include "cli-cmd.h"
-#include "distance-impl.hpp"
-#include "util-impl.hpp"
+#include "distance.h"
+#include "util.h"
 
 namespace cli
 {
@@ -209,7 +211,7 @@ namespace cli
         } else throw std::runtime_error("command already exist: " + commandName);
     }
 
-    inline Category& Category::ref(const std::string& commandName)
+    INLINE Category& Category::ref(const std::string& commandName)
     {
         checkCommandName(commandName);
         auto it = app->commandMap.find(commandName);

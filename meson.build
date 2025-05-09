@@ -1,38 +1,42 @@
 project('cli-cmd', 'cpp',
-        version : '0.4.0-dev',
+        version : '0.4.0',
         default_options : [
           'warning_level=3',
           #'werror=true',
           'cpp_std=c++17'
         ])
 
-# --- get option from meson_options.txt ---
-header_only = get_option('CLICMD_HEADER_ONLY')
-
-# --- definition for header-only ---
-if header_only
-  add_project_arguments('-DCLICMD_HEADER_ONLY', language : 'cpp')
-endif
-
-lib_sources = files([
-  'src/cli-cmd.cpp',
-  'src/distance.cpp',
-])
+clicmd_mode = get_option('clicmd_mode')
 
 inc = include_directories('include')
-if not header_only
-  cli_cmd_lib = static_library('cli-cmd',
-    lib_sources,
-    include_directories : inc
+
+if clicmd_mode == 0
+  message('cli-cmd: header-only mode selected')
+  add_project_arguments('-DCLICMD_HEADER_ONLY', language : 'cpp')
+  lib_dep = declare_dependency(include_directories : inc)
+
+elif clicmd_mode == 1
+  message('cli-cmd: source inclusion mode selected')
+  clicmd_sources = files(
+    'src/cli-cmd.cpp',
+    'src/distance.cpp',
+    'src/util.cpp',
   )
-  lib_dep = declare_dependency(
-    link_with : cli_cmd_lib,
-    include_directories : inc
+  lib_dep = declare_dependency(sources : clicmd_sources, include_directories : inc)
+
+elif clicmd_mode == 2
+  message('cli-cmd: static library mode selected')
+  clicmd_sources = files(
+    'src/cli-cmd.cpp',
+    'src/distance.cpp',
+    'src/util.cpp',
   )
-else
-  lib_dep = declare_dependency(
-    include_directories : inc
+  clicmd_lib = static_library(
+    'cli-cmd',
+    sources: clicmd_sources,
+    include_directories: inc,
   )
+  lib_dep = declare_dependency(link_with : clicmd_lib, include_directories : inc)
 endif
 
 first_sources = [
@@ -42,7 +46,6 @@ first_sources = [
 executable('first',
            first_sources,
            dependencies : lib_dep,
-           install : true
 )
 
 likegit_sources = [
@@ -63,7 +66,6 @@ likegit_sources = [
 executable('likegit',
   likegit_sources,
   dependencies : lib_dep,
-  install : true
 )
 
 likegcc_sources = [
@@ -74,5 +76,4 @@ likegcc_sources = [
 executable('likegcc',
   likegcc_sources,
   dependencies : lib_dep,
-  install : true
 )
