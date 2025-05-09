@@ -77,3 +77,19 @@ executable('likegcc',
   likegcc_sources,
   dependencies : lib_dep,
 )
+
+gtest_dep = dependency('gtest', required: true)
+gtest_main = dependency('gtest_main', required: true)
+
+test_sources = files(
+  'tests/test_clone_command.cpp',
+)
+
+test_exe = executable(
+  'cli_tests',
+  test_sources,
+  include_directories: inc,
+  dependencies: [gtest_dep, gtest_main, lib_dep],
+)
+
+test('cli-tests', test_exe)
