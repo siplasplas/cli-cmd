@@ -50,7 +50,7 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
 TEST(CliCmdTest, ArgumentsActualParsing) {
     auto app = makeAppWithClone();
 
-    app->parse("myapp clone path -v -a -b -a");
+    app->parse("mycli clone path -v -a -b -a");
 
     json expectedActual = R"({
         "command": "clone",

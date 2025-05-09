@@ -24,17 +24,18 @@ library code is so small, header-only is enough),
 ```c++
 #include "cli-cmd.hpp"
 
-void mycommand(cli::Application*, cli::Command* commad)
+void clone_(const cli::Actual* actual)
 {
     std::cout << "hello from handler!";
-    std::cout << "   mycmd has " << commad->positionalArgs.size() << " positional arguments"
+    std::cout << "   mycmd has " << actual->arguments.size() << " positional arguments"
         << std::endl;
 }
 
 int main(int argc, char** argv) {
     cli::Application app("first");
-    auto cmd = app.addSubcomand(mycommand, "mycmd", "My example command");
-    cmd->setPositionalArgsLimits(0, 1);
+    app.addCommand("clone").desc("Clone a repository into a new directory")
+            .addArg("repository", "url").addArgs("directory", "path", 0, 1)
+            .handler(clone_);
     app.run(argc, argv);
     return 0;
 }
