@@ -56,13 +56,14 @@ namespace cli
 
     struct Actual
     {
-        std::string commandName;
+        std::string m_name;
         std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
         int errNumber = 0;
         std::optional<std::string> errorStr;
+        explicit Actual(std::string commandName): m_name(std::move(commandName)){}
     };
 
     struct Formal
@@ -72,17 +73,15 @@ namespace cli
         std::optional<VaArguments> vaArgs;
     };
 
-    class Command {
-        std::string m_name, m_desc;
+    class Command: public Actual {
+        std::string m_desc;
         Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
-
     public:
-        explicit Command(std::string name): m_name(std::move(name)) {}
+        explicit Command(std::string name): Actual(std::move(name)) {}
         Formal formal;
-        Actual actual;
-        Application* app = nullptr;//todo remove it
+        Application* app = nullptr;
         [[nodiscard]] std::string to_string() const;
         Command& handler(const Action& _handler);
         Command& desc(const std::string& _desc);
