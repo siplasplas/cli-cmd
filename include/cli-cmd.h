@@ -49,21 +49,33 @@ namespace cli
                     argument(std::move(argument)), min_n(min_n), max_n(max_n){}
     };
 
+    struct Actual
+    {
+        std::string commandName;
+        std::vector<std::string> ignoredFlags;
+        std::vector<ArgumentValue> arguments;
+        std::set<std::string> flagSet;
+        bool containsFlag(const std::string &opt);
+    };
+
+    struct Formal
+    {
+        std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
+        std::vector<Argument> argList;
+        std::optional<VaArguments> vaArgs;
+    };
+
     class Command {
         std::string m_name, m_desc;
         Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
-        std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
-        std::vector<std::string> ignoredFlags;
-        std::vector<Argument> formalArgList;
-        std::optional<VaArguments> formalVaArgs;
+
     public:
         Command(std::string name): m_name(std::move(name)) {}
-        bool containsFlag(const std::string &opt);
-        Application* app = nullptr;
-        std::vector<ArgumentValue> arguments;
-        std::set<std::string> flagSet;
+        Formal formal;
+        Actual actual;
+        Application* app = nullptr;//todo usunac
         [[nodiscard]] std::string to_string() const;
         Command& handler(const Action& _handler);
         Command& desc(const std::string& _desc);
@@ -199,6 +211,7 @@ namespace cli
         Command* getCommand(const std::string& name);
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
+        void parse(int argc, char** argv);
         void run(int argc, char** argv);
         Category* addCategory(const std::string& caption);
         Category& addHelpCategory(const std::string& caption);

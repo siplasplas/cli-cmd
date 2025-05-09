@@ -20,7 +20,7 @@ void addCommonCommands(cli::Application &app);
 
 void clone_(cli::Application*, cli::Command* command)
 {
-    std::cout << "clone " << command->arguments[0].value << std::endl;
+    std::cout << "clone " << command->actual.arguments[0].value << std::endl;
 }
 
 int main(int argc, char** argv) {

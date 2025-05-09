@@ -13,6 +13,11 @@
 
 namespace cli
 {
+    INLINE bool Actual::containsFlag(const std::string& opt)
+    {
+        return flagSet.find(opt) != flagSet.end();
+    }
+
     INLINE std::string Command::to_string() const
     {
         std::string indent(3, ' ');
@@ -43,7 +48,7 @@ namespace cli
     INLINE Command& Command::addArg(std::string name, std::string type)
     {
         Argument argument(std::move(name), std::move(type));
-        formalArgList.push_back(argument);
+        formal.argList.push_back(argument);
         return *this;
     }
 
@@ -51,7 +56,7 @@ namespace cli
     {
         Argument argument(std::move(name), std::move(type));
         VaArguments argVa(std::move(argument), min_n, max_n);
-        this->formalVaArgs = argVa;
+        this->formal.vaArgs = argVa;
         return *this;
     }
 
@@ -68,24 +73,24 @@ namespace cli
             throw std::invalid_argument("must be description for help");
         if (str[0] != '-')
             throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
-        if (availableFlagMap.find(str) != availableFlagMap.end()) {
+        if (formal.availableFlagMap.find(str) != formal.availableFlagMap.end()) {
             throw std::invalid_argument(fmt("flag %s already exists for command %s",
                 str.c_str(), m_name.c_str()));
         }
         auto flag = std::make_shared<Flag>(str, desc);
-        availableFlagMap[str] = flag;
+        formal.availableFlagMap[str] = flag;
     }
 
     INLINE void Command::execute()
     {
-        if (!ignoredFlags.empty())
+        if (!actual.ignoredFlags.empty())
         {
             std::cout << "ignored flags: [";
-            for (size_t i = 0; i < ignoredFlags.size(); ++i)
+            for (size_t i = 0; i < actual.ignoredFlags.size(); ++i)
             {
                 if (i>0)
                     std::cout << " ";
-                std::cout << ignoredFlags[i];
+                std::cout << actual.ignoredFlags[i];
             }
             std::cout << "]" << std::endl;
         }
@@ -99,19 +104,19 @@ namespace cli
     {
         Node root(fmt("Command [%s]", m_name.c_str()));
         Node* positional = root.add(Node(fmt("Positional args: (size: %d)",
-            formalArgList.size())));
-        for (const auto& arg: formalArgList)
+            formal.argList.size())));
+        for (const auto& arg: formal.argList)
         {
             positional->add(Node(arg.name + " : " + arg.type));
         }
-        if (formalVaArgs.has_value())
+        if (formal.vaArgs.has_value())
         {
             positional = root.add(Node(fmt("VarPositional args: (min: %d, max: %d)",
-                        formalVaArgs.value().min_n, formalVaArgs.value().max_n)));
-            positional->add(Node(formalVaArgs.value().argument.name + " : " + formalVaArgs.value().argument.type));
+                        formal.vaArgs.value().min_n, formal.vaArgs.value().max_n)));
+            positional->add(Node(formal.vaArgs.value().argument.name + " : " + formal.vaArgs.value().argument.type));
         }
         Node* flags = root.add(Node("Flags"));
-        for (const auto& arg: flagSet)
+        for (const auto& arg: actual.flagSet)
         {
             flags->add(Node(arg));
         }
@@ -127,7 +132,7 @@ namespace cli
 
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
-        arguments.clear();
+        actual.arguments.clear();
         size_t count = 0, vacount = 0;
         for (size_t i = start; i < args.size(); i++)
         {
@@ -135,35 +140,35 @@ namespace cli
             assert(!arg.empty());
             if (arg[0]=='-')
             {
-                if (availableFlagMap.find(arg)  != availableFlagMap.end())
-                    flagSet.insert(arg);
+                if (formal.availableFlagMap.find(arg)  != formal.availableFlagMap.end())
+                    actual.flagSet.insert(arg);
                 else
-                    ignoredFlags.push_back(arg);
+                    actual.ignoredFlags.push_back(arg);
             }
             else
             {
-                if (count < formalArgList.size())
+                if (count < formal.argList.size())
                 {
-                    Argument &formalArgument = formalArgList[count++];
-                    arguments.emplace_back(formalArgument, arg);
+                    Argument &formalArgument = formal.argList[count++];
+                    actual.arguments.emplace_back(formalArgument, arg);
                 } else
                 {
-                    Argument &formalArgument = formalVaArgs->argument;
-                    arguments.emplace_back(formalArgument, arg);
+                    Argument &formalArgument = formal.vaArgs->argument;
+                    actual.arguments.emplace_back(formalArgument, arg);
                     vacount++;
                 }
             }
         }
-        if (arguments.size() < formalArgList.size() + formalVaArgs->min_n)
-            std::cout << app->appName << ": " << m_name << " have " << arguments.size() <<
-                " arguments but minimal is " << formalArgList.size() + formalVaArgs->min_n << std::endl;
-        else if (arguments.size() > formalArgList.size() + formalVaArgs->max_n)
-            std::cout << app->appName << ": " << m_name << " have " << arguments.size() <<
-                " arguments but maximal is " << formalArgList.size() + formalVaArgs->max_n << std::endl;
+        if (actual.arguments.size() < formal.argList.size() + formal.vaArgs->min_n)
+            std::cout << app->appName << ": " << m_name << " have " << actual.arguments.size() <<
+                " arguments but minimal is " << formal.argList.size() + formal.vaArgs->min_n << std::endl;
+        else if (actual.arguments.size() > formal.argList.size() + formal.vaArgs->max_n)
+            std::cout << app->appName << ": " << m_name << " have " << actual.arguments.size() <<
+                " arguments but maximal is " << formal.argList.size() + formal.vaArgs->max_n << std::endl;
         else if (!m_handler)
         {
             std::cout << app->appName << ": " << args[1] << " is placeholder with positional arguments:\n";
-            for (const auto& arg : arguments)
+            for (const auto& arg : actual.arguments)
                 std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
         } else
         {
@@ -173,12 +178,6 @@ namespace cli
                 execute();
         }
     }
-
-    inline bool Command::containsFlag(const std::string& opt)
-    {
-        return flagSet.find(opt) != flagSet.end();
-    }
-
 
     INLINE bool Category::is_alnum_or_dash(const std::string& str) {
         return std::all_of(str.begin(), str.end(), [](unsigned char c) {
@@ -338,10 +337,10 @@ namespace cli
             if (args[1] == "help")
             {
                 auto cmdHelp = getCommand("help");
-                cmdHelp->arguments.clear();
+                cmdHelp->actual.arguments.clear();
                 Argument argument("command","");
                 ArgumentValue avalue(argument, appName);
-                cmdHelp->arguments.push_back(avalue);
+                cmdHelp->actual.arguments.push_back(avalue);
                 help(cmdHelp);
                 return;
             }
@@ -365,10 +364,15 @@ namespace cli
         parse(splitStringWithQuotes(line));
     }
 
-    INLINE void Application::run(int argc, char** argv)
+    INLINE void Application::parse(int argc, char** argv)
     {
         std::vector<std::string> args(argv, argv + argc);
         parse(args);
+    }
+
+    INLINE void Application::run(int argc, char** argv)
+    {
+        parse(argc, argv);
     }
 
     INLINE Command& Application::addCommand(std::string name)
@@ -394,7 +398,7 @@ namespace cli
      */
     INLINE void Application::printCommands(Command* cmdHelp) const
     {
-        const bool bAll = cmdHelp->containsFlag("--all");
+        const bool bAll = cmdHelp->actual.containsFlag("--all");
 
         for (const auto& cmd : commands) {
             std::cout << cmd->to_string() << std::endl;
@@ -421,7 +425,7 @@ namespace cli
 
     INLINE void Application::commandHelp(Command* cmdHelp) const
     {
-        auto arg = cmdHelp->arguments[0];
+        auto arg = cmdHelp->actual.arguments[0];
         auto it = commandMap.find(arg.value);
         if (it == commandMap.end())
         {
@@ -430,7 +434,7 @@ namespace cli
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
-        for (const auto& [key, opt] : cmd->availableFlagMap) {
+        for (const auto& [key, opt] : cmd->formal.availableFlagMap) {
             std::cout << opt->to_string() << std::endl;
         }
     }
@@ -438,7 +442,7 @@ namespace cli
 
     INLINE void Application::help(Command* cmdHelp) const
     {
-        if (cmdHelp->arguments.empty())
+        if (cmdHelp->actual.arguments.empty())
             printCommands(cmdHelp);
         else
             commandHelp(cmdHelp);
