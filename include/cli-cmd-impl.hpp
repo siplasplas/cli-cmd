@@ -177,56 +177,51 @@ namespace cli
         return flagSet.find(opt) != flagSet.end();
     }
 
-    INLINE Command& Category::addCommand(std::string str)
+
+    INLINE bool Category::is_alnum_or_dash(const std::string& str) {
+        return std::all_of(str.begin(), str.end(), [](unsigned char c) {
+            return std::isalnum(c) || c == '-';
+        });
+    }
+
+    INLINE  void Category::checkCommandName(std::string commandName)
     {
-        if (str.empty())
+        if (commandName.empty())
             throw std::runtime_error("command is empty ");
-        if (str[0] == '-')
-            throw std::runtime_error("command can't start with hyphen, use options or flags instead");
-        if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(str);
+        if (commandName[0] == '-')
+            throw std::runtime_error(fmt("command can't start with dash, use options or flags instead",
+                commandName.c_str()));
+        if (commandName.find(' ') != std::string::npos)
+            throw std::runtime_error(fmt("command [%s] can't contains spaces", commandName.c_str()));
+        if (!is_alnum_or_dash(commandName))
+            throw std::runtime_error(fmt("command [%s] can't contains other characters than alnum and dash", commandName.c_str()));
+    }
+
+    INLINE Command& Category::addCommand(std::string commandName)
+    {
+        checkCommandName(commandName);
+        if (app->commandMap.find(commandName) == app->commandMap.end()) {
+            std::shared_ptr<Command> command = std::make_shared<Command>(commandName);
             command->app = app;
             commands.push_back(command);
-            app->commandMap.emplace(str, commands.back().get());
+            app->commandMap.emplace(commandName, commands.back());
             return *commands.back().get();
-        } else throw std::runtime_error("command already exist: " + str);
+        } else throw std::runtime_error("command already exist: " + commandName);
+    }
+
+    inline Category& Category::ref(const std::string& commandName)
+    {
+        checkCommandName(commandName);
+        auto it = app->commandMap.find(commandName);
+        if (it != app->commandMap.end()) {
+            commands.push_back(it->second);
+            return *this;
+        } else throw std::runtime_error("command not exist: " + commandName);
     }
 
     INLINE std::string Category::to_string()
     {
         return description;
-    }
-
-    INLINE Subcategory* Category::addSubcategory(std::string caption)
-    {
-        auto subcategory = std::make_unique<Subcategory>(std::move(caption), app);
-        subcategories.push_back(std::move(subcategory));
-        return subcategories.back().get();
-    }
-
-    INLINE Command& Subcategory::addCommand(std::string str)
-    {
-        if (str.empty())
-            throw std::runtime_error("command is empty ");
-        if (str[0] == '-')
-            throw std::runtime_error("command can't start with hyphen, use options or flags instead");
-        if (app->commandMap.find(str) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(str);
-            command->app = app;
-            commands.push_back(command);
-            app->commandMap.emplace(str, commands.back().get());
-            return *commands.back().get();
-        } else throw std::runtime_error("command already exist: " + str);
-    }
-
-    INLINE std::string Subcategory::to_string() const
-    {
-        std::string result;
-        for (const auto& command_ptr : commands)
-        {
-            result += command_ptr->to_string() + "\n";
-        }
-        return result;
     }
 
     INLINE std::unordered_map<std::string, std::string> Application::parseSimpleArgs(const std::string& input) {
@@ -278,11 +273,18 @@ namespace cli
         return categories.back().get();
     }
 
+    INLINE Category& Application::addHelpCategory(const std::string& caption)
+    {
+        auto category = std::make_unique<Category>(caption, this);
+        helpCategories.push_back(std::move(category));
+        return *helpCategories.back().get();
+    }
+
     INLINE Command* Application::getCommand(const std::string& name)
     {
         auto it = commandMap.find(name);
         if (it != commandMap.end()) {
-            return it->second;
+            return it->second.get();
         } else
             throw std::runtime_error("command not found: " + name);
     }
@@ -318,14 +320,19 @@ namespace cli
             throw std::runtime_error("help not exists, use app.initHelp();");
         if (args.size() < 2)
         {
-            mainCommand->execute();
+            if (mainCommand)
+                mainCommand->execute();
+            else
+            {   auto helpCommand = getCommand("help");
+                helpCommand->execute();
+            }
             return;
         }
-        Command* command = nullptr;
+        std::shared_ptr<Command> command;
         int start = 1;
         if (cmdDepth == 0)
         {
-            command = mainCommand.get();
+            command = mainCommand;
             if (args[1] == "help")
             {
                 auto cmdHelp = getCommand("help");
@@ -346,7 +353,7 @@ namespace cli
             else
                 command = it->second;
         }
-        if (command == nullptr)
+        if (!command)
             return;
         command->parse(start, args);
     }
@@ -368,7 +375,7 @@ namespace cli
             std::shared_ptr<Command> command = std::make_shared<Command>(name);
             command->app = this;
             commands.push_back(command);
-            commandMap.emplace(name, commands.back().get());
+            commandMap.emplace(name, commands.back());
             return *commands.back().get();
         } else throw std::runtime_error("command already exist: " + name);
     }
@@ -387,18 +394,11 @@ namespace cli
     {
         const bool bAll = cmdHelp->containsFlag("--all");
 
-        if (cmdDepth <= 1) {
-            for (const auto& cmd : commands) {
-                std::cout << cmd->to_string() << std::endl;
-            }
-            return;
+        for (const auto& cmd : commands) {
+            std::cout << cmd->to_string() << std::endl;
         }
 
-        if (cmdDepth == 2) {
-            for (const auto& cmd : commands) {
-                std::cout << cmd->to_string() << std::endl;
-            }
-
+        if (cmdDepth == 2 || (cmdDepth == 3 && bAll)) {
             for (const auto& category_ptr : categories) {
                 std::cout << std::endl << category_ptr->description << std::endl;
                 for (const auto& cmd : category_ptr->commands) {
@@ -406,38 +406,12 @@ namespace cli
                 }
             }
             return;
-        }
-
-        if (cmdDepth == 3) {
-            for (const auto& cmd : commands) {
-                std::cout << cmd->to_string() << std::endl;
-            }
-
-            for (const auto& category_ptr : categories) {
-                if (!bAll) {
-                    for (const auto& subcategory_ptr : category_ptr->subcategories) {
-                        std::cout << std::endl << subcategory_ptr->description << std::endl;
-                        for (const auto& cmd : subcategory_ptr->commands) {
-                            std::cout << cmd->to_string() << std::endl;
-                        }
-                    }
-                } else {
-                    std::vector<std::shared_ptr<Command>> all_cmds = category_ptr->commands;
-                    for (const auto& subcategory_ptr : category_ptr->subcategories) {
-                        all_cmds.insert(all_cmds.end(),
-                                        subcategory_ptr->commands.begin(),
-                                        subcategory_ptr->commands.end());
-                    }
-
-                    std::sort(all_cmds.begin(), all_cmds.end(),
-                        [](const std::shared_ptr<Command>& a, const std::shared_ptr<Command>& b) {
-                            return a->m_name < b->m_name;
-                        });
-
-                    std::cout << std::endl << category_ptr->description << std::endl;
-                    for (const auto& cmd : all_cmds) {
-                        std::cout << cmd->to_string() << std::endl;
-                    }
+        } else if (cmdDepth == 3) {
+            for (const auto& category_ptr : helpCategories)
+            {
+                std::cout << std::endl << category_ptr->description << std::endl;
+                for (const auto& cmd : category_ptr->commands) {
+                    std::cout << cmd->to_string() << std::endl;
                 }
             }
         }
@@ -503,13 +477,13 @@ namespace cli
             mainCommand->handler(actionStub);
             mainCommand->app = this;
             commands.push_back(mainCommand);
-            commandMap.emplace(appName, commands.back().get());
+            commandMap.emplace(appName, commands.back());
         }
 
         Action actionHelp = [](const Application* app, Command* cmd) {
             app->help(cmd);
         };
-        auto helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
+        auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
                 .addArgs("command", "", 0, 1);
         if (cmdDepth==3)
             helpCmd.addFlag("--all", "all commands");

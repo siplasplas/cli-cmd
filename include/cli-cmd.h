@@ -76,40 +76,30 @@ namespace cli
         void print() const;
     };
 
-    class Subcategory
-    {
-        const std::string description;
-        std::vector<std::shared_ptr<Command>> commands;
-        Application* app;
-        friend class Application;
-    public:
-        Subcategory(std::string  name, Application* app): description(std::move(name)), app(app) {}
-        [[nodiscard]] std::string to_string() const;
-        Command& addCommand(std::string str);
-    };
-
     class Category
     {
         std::string description;
         std::vector<std::shared_ptr<Command>> commands;
-        std::vector<std::unique_ptr<Subcategory>> subcategories;
         friend class Application;
         Application* app;
     public:
-        Category(std::string  name, Application* app): description(std::move(name)), app(app) {}
+        Category(std::string  description, Application* app): description(std::move(description)), app(app) {}
         Category(const Category&) = delete;
         Category& operator=(const Category&) = delete;
+        Category& ref(const std::string& commandName);
         Category(Category&&) = default;
         Category& operator=(Category&&) = default;
         std::string to_string();
-        Subcategory* addSubcategory(std::string caption);
-        Command& addCommand(std::string str);
+        static  bool is_alnum_or_dash(const std::string& str);
+        static void checkCommandName(std::string commandName);
+        Command& addCommand(std::string commandName);
     };
 
     class Application {
-        std::map<std::string, Command*> commandMap;
+        std::map<std::string, std::shared_ptr<Command>> commandMap;
         std::vector<std::shared_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
+        std::vector<std::unique_ptr<Category>> helpCategories;
         static std::vector<std::string> findMostSimilar(const std::string& proposed, const std::vector<std::string> &keys);
         static std::vector<std::string> splitStringWithQuotes(const std::string& input);
         friend class Category;
@@ -212,6 +202,7 @@ namespace cli
         void parse(const std::string& line);
         void run(int argc, char** argv);
         Category* addCategory(const std::string& caption);
+        Category& addHelpCategory(const std::string& caption);
         Command& addCommand(std::string name);
     };
 

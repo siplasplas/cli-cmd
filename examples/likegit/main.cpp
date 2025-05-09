@@ -15,6 +15,7 @@ void addLovLevelInternal(cli::Application &app);
 void adduserFacing(cli::Application &app);
 void addDeveloperFacing(cli::Application &app);
 void addExternalCommands(cli::Application &app);
+void addCommonCommands(cli::Application &app);
 
 void clone_(cli::Application*, cli::Command* command)
 {
@@ -34,6 +35,7 @@ int main(int argc, char** argv) {
     adduserFacing(app);
     addDeveloperFacing(app);
     addExternalCommands(app);
+    addCommonCommands(app);
     auto cloneCmd = app.getCommand("clone");
     cloneCmd->handler(clone_);
     cloneCmd->addFlag("-v", "be more verbose");
