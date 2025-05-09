@@ -13,7 +13,7 @@
 
 namespace cli
 {
-    INLINE bool Actual::containsFlag(const std::string& opt)
+    INLINE bool Actual::containsFlag(const std::string& opt) const
     {
         return flagSet.find(opt) != flagSet.end();
     }
@@ -97,7 +97,7 @@ namespace cli
         if (!m_handler)
             std::cout << "Placeholder for [" << m_name << "]: command not set" << std::endl;
         else
-            m_handler(app, this);
+            m_handler(&this->actual);
     }
 
     INLINE void Command::print() const
@@ -341,7 +341,7 @@ namespace cli
                 Argument argument("command","");
                 ArgumentValue avalue(argument, appName);
                 cmdHelp->actual.arguments.push_back(avalue);
-                help(cmdHelp);
+                help(&cmdHelp->actual);
                 return;
             }
         }
@@ -396,9 +396,9 @@ namespace cli
      * - 3: If `bAll` is false, shows subcategories' descriptions and their commands.
      *      If `bAll` is true, shows all commands from categories and subcategories, sorted by name within categories.
      */
-    INLINE void Application::printCommands(Command* cmdHelp) const
+    INLINE void Application::printCommands(const Actual* actual) const
     {
-        const bool bAll = cmdHelp->actual.containsFlag("--all");
+        const bool bAll = actual->containsFlag("--all");
 
         for (const auto& cmd : commands) {
             std::cout << cmd->to_string() << std::endl;
@@ -423,9 +423,9 @@ namespace cli
         }
     }
 
-    INLINE void Application::commandHelp(Command* cmdHelp) const
+    INLINE void Application::commandHelp(const Actual* actual) const
     {
-        auto arg = cmdHelp->actual.arguments[0];
+        auto arg = actual->arguments[0];
         auto it = commandMap.find(arg.value);
         if (it == commandMap.end())
         {
@@ -440,15 +440,15 @@ namespace cli
     }
 
 
-    INLINE void Application::help(Command* cmdHelp) const
+    INLINE void Application::help(const Actual* actual) const
     {
-        if (cmdHelp->actual.arguments.empty())
-            printCommands(cmdHelp);
+        if (actual->arguments.empty())
+            printCommands(actual);
         else
-            commandHelp(cmdHelp);
+            commandHelp(actual);
     }
 
-    INLINE void Application::mainCommandStub(Command* command)
+    INLINE void Application::mainCommandStub(const Actual* actual)
     {
         if (cmdDepth == 0)
         {
@@ -456,7 +456,7 @@ namespace cli
             std::cout << "  auto mainCommand = app.mainCommand;" << std::endl;
             std::cout << "  mainCommand->setHandler(mainHandler);" << std::endl;
         } else
-            help(command);
+            help(actual);
     }
 
     INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
@@ -475,8 +475,8 @@ namespace cli
     {
         if (cmdDepth == 0)
         {
-            Action actionStub = [](Application* app, Command* cmd) {
-                app->mainCommandStub(cmd);
+            Action actionStub = [this](const Actual* actual) {
+                mainCommandStub(actual);
             };
             mainCommand = std::make_shared<Command>(appName);
             mainCommand->desc(appName);
@@ -486,8 +486,8 @@ namespace cli
             commandMap.emplace(appName, commands.back());
         }
 
-        Action actionHelp = [](const Application* app, Command* cmd) {
-            app->help(cmd);
+        Action actionHelp = [this](const Actual* actual) {
+            help(actual);
         };
         auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
                 .addArgs("command", "", 0, 1);

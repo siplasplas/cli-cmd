@@ -11,10 +11,11 @@
 
 namespace cli
 {
+    struct Actual;
     class Application;
     class Command;
 
-    using Action = std::function<void(Application*, Command*)>;
+    using Action = std::function<void(const Actual*)>;
 
     class Flag
     {
@@ -55,7 +56,7 @@ namespace cli
         std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
-        bool containsFlag(const std::string &opt);
+        bool containsFlag(const std::string &opt) const;
     };
 
     struct Formal
@@ -75,7 +76,7 @@ namespace cli
         Command(std::string name): m_name(std::move(name)) {}
         Formal formal;
         Actual actual;
-        Application* app = nullptr;//todo usunac
+        Application* app = nullptr;//todo remove it
         [[nodiscard]] std::string to_string() const;
         Command& handler(const Action& _handler);
         Command& desc(const std::string& _desc);
@@ -195,12 +196,12 @@ namespace cli
         static void setArg(std::unordered_map<std::string, std::string> &args,
                            const std::string& name, int& arg, int min, int max);
         void commandNotFound(const std::string &arg);
-        void printCommands(Command* cmdHelp) const;
-        void commandHelp(Command* cmdHelp) const;
+        void printCommands(const Actual* actual) const;
+        void commandHelp(const Actual* actual) const;
         void proposeSimilar(const std::string &arg) const;
     protected:
-        void help(Command* command) const;
-        void mainCommandStub(Command*);
+        void help(const Actual*) const;
+        void mainCommandStub(const Actual*);
         void initSystemCommands();
     public:
         Application(std::string appName, const std::string& namedParams);

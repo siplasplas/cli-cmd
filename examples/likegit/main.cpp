@@ -18,9 +18,9 @@ void addDeveloperFacing(cli::Application &app);
 void addExternalCommands(cli::Application &app);
 void addCommonCommands(cli::Application &app);
 
-void clone_(cli::Application*, cli::Command* command)
+void clone_(const cli::Actual* actual)
 {
-    std::cout << "clone " << command->actual.arguments[0].value << std::endl;
+    std::cout << "clone " << actual->arguments[0].value << std::endl;
 }
 
 int main(int argc, char** argv) {

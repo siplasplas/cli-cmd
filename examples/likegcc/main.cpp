@@ -11,7 +11,7 @@ void show_version() {
     std::cout << "version" << std::endl;
 }
 
-void mainHandler(cli::Application*, cli::Command*)
+void mainHandler(const cli::Actual*)
 {
     std::cout << "hello from main handler!";
 }

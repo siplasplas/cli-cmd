@@ -1,9 +1,9 @@
 #include "cli-cmd.hpp"
 
-void clone_(cli::Application*, cli::Command* commad)
+void clone_(const cli::Actual* actual)
 {
     std::cout << "hello from handler!";
-    std::cout << "   mycmd has " << commad->arguments.size() << " positional arguments"
+    std::cout << "   mycmd has " << actual->arguments.size() << " positional arguments"
         << std::endl;
 }
 
