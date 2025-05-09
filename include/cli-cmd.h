@@ -8,12 +8,18 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <nlohmann/json.hpp>
+using nlohmann::json;
 
 namespace cli
 {
     struct Actual;
     class Application;
     class Command;
+    struct ArgumentValue;
+
+    void to_json(json& j, const ArgumentValue& v);
+    void to_json(json& j, const Actual& a);
 
     inline const char* errorMsg1 = "%s : %s is placeholder with positional arguments:";
     inline const char* errorMsg2 = "%s : %s have %d arguments but minimal is %d";
@@ -23,10 +29,10 @@ namespace cli
 
     class Flag
     {
-        const std::string name, desc;
     public:
         Flag(std::string name,  std::string desc):
             name(std::move(name)), desc(std::move(desc)) {}
+        const std::string name, desc;
         [[nodiscard]] std::string to_string() const;
     };
 
@@ -82,6 +88,8 @@ namespace cli
         explicit Command(std::string name): Actual(std::move(name)) {}
         Formal formal;
         Application* app = nullptr;
+        json asJson();
+        json formalAsJson();
         [[nodiscard]] std::string to_string() const;
         Command& handler(const Action& _handler);
         Command& desc(const std::string& _desc);

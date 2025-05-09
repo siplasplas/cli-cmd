@@ -13,9 +13,83 @@
 
 namespace cli
 {
+    INLINE void to_json(json& j, const ArgumentValue& v) {
+        j = json{
+                {"name", v.argument.name},
+                {"type", v.argument.type},
+                {"value", v.value}
+        };
+    }
+
+    INLINE void to_json(json& j, const Argument& v) {
+        j = json{
+                        {"name", v.name},
+                        {"type", v.type},
+            };
+    }
+
+    INLINE void to_json(json& j, const VaArguments& v) {
+        j = json{
+                    {"argument", v.argument},
+                    {"min-n", v.min_n},
+                    {"max-n", v.max_n},
+        };
+    }
+
+    INLINE void to_json(json& j, const Flag& v) {
+        j = json{
+                    {"argument", v.name},
+                    {"argument", v.desc},
+            };
+    }
+
+    INLINE void to_json(json& j, const Actual& a) {
+        j = json{
+                {"command", a.m_name},
+                {"ignored_flags", a.ignoredFlags},
+                {"flag_set", std::vector<std::string>(a.flagSet.begin(), a.flagSet.end())},
+                {"error_number", a.errNumber},
+            };
+        if (a.errorStr.has_value()) {
+            j["error_str"] = *a.errorStr;
+        }
+        j["arguments"] = a.arguments;
+    }
+
+    INLINE void to_json(json& j, const Formal& f) {
+        // serialize flag map (flattened to list)
+        json flags = json::array();
+        for (const auto& [name, flagPtr] : f.availableFlagMap) {
+            if (flagPtr) {
+                flags.push_back(*flagPtr.get()); // requires to_json(json&, const Flag&)
+            }
+        }
+
+        j = json{
+            {"flags", flags},
+            {"arguments", f.argList}, // requires to_json(json&, const Argument&)
+        };
+
+        if (f.vaArgs) {
+            j["varargs"] = *f.vaArgs; // requires to_json(json&, const VaArguments&)
+        }
+    }
+
     INLINE bool Actual::containsFlag(const std::string& opt) const
     {
         return flagSet.find(opt) != flagSet.end();
+    }
+
+    INLINE json Command::asJson()
+    {
+        json j = *this;
+        return j;
+    }
+
+    INLINE json Command::formalAsJson()
+    {
+        json j = formal;
+        return j;
     }
 
     INLINE std::string Command::to_string() const
@@ -344,11 +418,10 @@ namespace cli
             }
             return;
         }
-        std::shared_ptr<Command> command;
         int start = 1;
         if (cmdDepth == 0)
         {
-            command = mainCommand;
+            currentCommand = mainCommand;
             if (args[1] == "help")
             {
                 auto cmdHelp = getCommand("help");
@@ -369,8 +442,8 @@ namespace cli
             }
             else
             {
-                command = it->second;
-                command->parse(start, args);
+                currentCommand = it->second;
+                currentCommand->parse(start, args);
             }
         }
     }
