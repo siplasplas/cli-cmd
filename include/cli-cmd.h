@@ -56,7 +56,7 @@ namespace cli
         std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
-        bool containsFlag(const std::string &opt) const;
+        [[nodiscard]] bool containsFlag(const std::string &opt) const;
     };
 
     struct Formal
@@ -73,7 +73,7 @@ namespace cli
         friend class Application;
 
     public:
-        Command(std::string name): m_name(std::move(name)) {}
+        explicit Command(std::string name): m_name(std::move(name)) {}
         Formal formal;
         Actual actual;
         Application* app = nullptr;//todo remove it
@@ -84,7 +84,7 @@ namespace cli
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
         void addFlag(const std::string& str, const std::string& desc);
-        void execute();
+        void execute() const;
         void print() const;
     };
 
@@ -102,8 +102,8 @@ namespace cli
         Category(Category&&) = default;
         Category& operator=(Category&&) = default;
         std::string to_string();
-        static  bool is_alnum_or_dash(const std::string& str);
-        static void checkCommandName(std::string commandName);
+        static  bool isAlphaNumOrDash(const std::string& str);
+        static void checkCommandName(const std::string& commandName);
         Command& addCommand(std::string commandName);
     };
 
@@ -195,13 +195,13 @@ namespace cli
         static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
         static void setArg(std::unordered_map<std::string, std::string> &args,
                            const std::string& name, int& arg, int min, int max);
-        void commandNotFound(const std::string &arg);
+        void commandNotFound(const std::string &arg) const;
         void printCommands(const Actual* actual) const;
         void commandHelp(const Actual* actual) const;
         void proposeSimilar(const std::string &arg) const;
     protected:
         void help(const Actual*) const;
-        void mainCommandStub(const Actual*);
+        void mainCommandStub(const Actual*) const;
         void initSystemCommands();
     public:
         Application(std::string appName, const std::string& namedParams);

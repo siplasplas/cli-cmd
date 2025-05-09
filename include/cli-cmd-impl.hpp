@@ -81,7 +81,7 @@ namespace cli
         formal.availableFlagMap[str] = flag;
     }
 
-    INLINE void Command::execute()
+    INLINE void Command::execute() const
     {
         if (!actual.ignoredFlags.empty())
         {
@@ -133,7 +133,7 @@ namespace cli
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
         actual.arguments.clear();
-        size_t count = 0, vacount = 0;
+        size_t count = 0, varCount = 0;
         for (size_t i = start; i < args.size(); i++)
         {
             auto arg = args[i];
@@ -155,7 +155,7 @@ namespace cli
                 {
                     Argument &formalArgument = formal.vaArgs->argument;
                     actual.arguments.emplace_back(formalArgument, arg);
-                    vacount++;
+                    varCount++;
                 }
             }
         }
@@ -179,13 +179,13 @@ namespace cli
         }
     }
 
-    INLINE bool Category::is_alnum_or_dash(const std::string& str) {
+    INLINE bool Category::isAlphaNumOrDash(const std::string& str) {
         return std::all_of(str.begin(), str.end(), [](unsigned char c) {
             return std::isalnum(c) || c == '-';
         });
     }
 
-    INLINE  void Category::checkCommandName(std::string commandName)
+    INLINE  void Category::checkCommandName(const std::string& commandName)
     {
         if (commandName.empty())
             throw std::runtime_error("command is empty ");
@@ -194,8 +194,8 @@ namespace cli
                 commandName.c_str()));
         if (commandName.find(' ') != std::string::npos)
             throw std::runtime_error(fmt("command [%s] can't contains spaces", commandName.c_str()));
-        if (!is_alnum_or_dash(commandName))
-            throw std::runtime_error(fmt("command [%s] can't contains other characters than alnum and dash", commandName.c_str()));
+        if (!isAlphaNumOrDash(commandName))
+            throw std::runtime_error(fmt("command [%s] can't contains other characters than alpha-num and dash", commandName.c_str()));
     }
 
     INLINE Command& Category::addCommand(std::string commandName)
@@ -307,7 +307,7 @@ namespace cli
         }
     }
 
-    INLINE void Application::commandNotFound(const std::string &arg)
+    INLINE void Application::commandNotFound(const std::string &arg) const
     {
         std::cout << appName << ": '" << arg << "' is not a valid command see " <<
                 appName << " --help" << std::endl ;
@@ -339,8 +339,8 @@ namespace cli
                 auto cmdHelp = getCommand("help");
                 cmdHelp->actual.arguments.clear();
                 Argument argument("command","");
-                ArgumentValue avalue(argument, appName);
-                cmdHelp->actual.arguments.push_back(avalue);
+                ArgumentValue argValue(argument, appName);
+                cmdHelp->actual.arguments.push_back(argValue);
                 help(&cmdHelp->actual);
                 return;
             }
@@ -448,7 +448,7 @@ namespace cli
             commandHelp(actual);
     }
 
-    INLINE void Application::mainCommandStub(const Actual* actual)
+    INLINE void Application::mainCommandStub(const Actual* actual) const
     {
         if (cmdDepth == 0)
         {
@@ -533,15 +533,13 @@ namespace cli
         std::vector<std::string> result;
         std::istringstream iss(input);
         std::string token;
-        bool inQuotes = false;
         char currentQuote = '\0';
 
         while (iss >> std::ws) {
             char ch = static_cast<char>(iss.peek());
 
-            if ((ch == '"' || ch == '\'') && !inQuotes) {
+            if ((ch == '"' || ch == '\'')) {
                 // The beginning of the quotation marks
-                inQuotes = true;
                 currentQuote = ch;
                 iss.get(); // Download the quotation mark
                 std::string quotedToken;
@@ -551,7 +549,6 @@ namespace cli
                 }
 
                 result.push_back(quotedToken);
-                inQuotes = false;
             } else {
                 // Normal token (without quotation marks)
                 std::string normalToken;
