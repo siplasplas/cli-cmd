@@ -139,3 +139,46 @@ Defines a parameter that has a default value if it is not present on the command
 
     cmd.addDefParameter("--directory", ".").expect("path");
 
+
+## Option vs Flag vs Parameter
+
+In this library, the term option is used in a broad sense — it refers to both flags and parameters.
+
+However, for clarity and precision, it's helpful to distinguish between the two:
+```
+Concept    Example                          Has Value?  Description
+Flag	   --verbose, -v                    ❌           A boolean switch: either present or not.
+Parameter  --output file.txt, -o file.txt   ✅           An option that requires a value (e.g. a path, number, string).
+```
+Terminology
+* Flags are binary — they only indicate presence.
+* Parameters carry additional data.
+* Both are considered options at the syntactic level (they start with - or --), but behave differently semantically.
+💡 Example (Code)
+```
+Program cli("mycli");
+
+cli.addCommand("build")
+    .addFlag("--release").shorthand('r')
+        .desc("Enable release mode")  // A flag
+    .addParameter("--output").shorthand('o').expect("path")
+        .desc("Set output file path") // A parameter
+    .handler([](const Actual* a) {
+        if (a->containsFlag("--release")) {
+            std::cout << "Release mode ON\n";
+        }
+
+        if (auto out = a->getValue("--output")) {
+            std::cout << "Output: " << *out << "\n";
+        }
+    });
+```
+💬 CLI Usage
+```
+mycli build -r -o bin/app
+
+    -r → sets --release flag.
+
+    -o bin/app → provides value for --output.
+```
+This separation improves expressiveness and avoids ambiguity, especially in complex CLI interfaces.
