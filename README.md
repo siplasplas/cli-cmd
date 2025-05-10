@@ -58,15 +58,15 @@ modeled after common conventions seen in tools like git, gcc, and UNIX-style CLI
    Interpretation:<br>
    In multi-command style (like git), this represents a command and must be the first argument after the program name (argv[1]).
    In single-command style (like gcc), it's a positional argument, and may appear in any position.
-#### Short Flag or Option – One Dash + One Alphanumeric Character
+#### Short Flag or Parameter – One Dash + One Alphanumeric Character
    Format: exactly two characters, where the first is a single dash (-), and the second is an ASCII letter or digit.
    
    Examples:
 
         -v (flag: verbose)
-        -o (option: output – requires a value in the next argument)
+        -o (parameter: output – requires a value in the next argument)
 
-#### Long Flag or Option – Double Dash + Word
+#### Long Flag or Parameter – Double Dash + Word
    Format:
 
         Starts with --
@@ -84,14 +84,14 @@ Examples:
  
         -vg is equivalent to -v -g
         -abc expands to three flags
-Flags and options in one group:
+Flags and parameters in one group:
 
-If the last character in the group is an option (takes a value), it must be last:
+If the last character in the group is a parameter (takes a value), it must be last:
 
         Value via separate arg: myprog mycmd -vo path
         Or inline with =: myprog mycmd -vo=path
-#### Free-form Arguments – Values Passed to Options or as Positional Arguments
-   Any string (including special characters like /, :, . or even -) is allowed as a value to an option or as a positional argument, provided it's not interpreted as a flag or command.
+#### Free-form Arguments – Values Passed to Parameters or as Positional Arguments
+   Any string (including special characters like /, :, . or even -) is allowed as a value to a parameter or as a positional argument, provided it's not interpreted as a flag or command.
    
    Examples:
 
@@ -101,41 +101,41 @@ If the last character in the group is an option (takes a value), it must be last
    These are interpreted based on context - e.g., after -o, any value is accepted.
 
 
-## Declaring Optional, Required, and Defaulted Options
+## Declaring Optional, Required, and Defaulted Parameters
 
-This library provides three distinct methods for declaring options (key–value pairs) depending on how strictly they must appear on the command line:
-#### addOption(...) – Optional Option
+This library provides three distinct methods for declaring parameters (key–value pairs) depending on how strictly they must appear on the command line:
+#### addParameter(...) – Optional Parameter
 
-Registers an optional option — one that may be provided by the user, but is not required.
+Registers an optional parameter — one that may be provided by the user, but is not required.
 
-    If the option is missing, the associated value is not set.
+    If the parameter is missing, the associated value is not set.
 
     Example:
 
-    cmd.addOption("--output").shorthand('o').expect("path");
+    cmd.addParameter("--output").shorthand('o').expect("path");
 
     Use case: the output file path may or may not be specified.
 
-#### addReqOption(...) – Required Option
+#### addReqParameter(...) – Required Parameter
 
-Declares a required option — the program will fail if the user does not provide it.
+Declares a required parameter — the program will fail if the user does not provide it.
 
-    Ideal for options like --config or --input that are mandatory.
-
-    Example:
-
-    cmd.addReqOption("--config").expect("path");
-
-#### addDefOption(...) – Option with Default Value
-
-Defines an option that has a default value if it is not present on the command line.
-
-    ⚠️ Note: This does not mean the option is provided without an argument.
-    It means the option can be omitted entirely, and its value will default internally.
-
-    Typical for options like --directory where . (current directory) is a reasonable fallback.
+    Ideal for parameters like --config or --input that are mandatory.
 
     Example:
 
-    cmd.addDefOption("--directory", ".").expect("path");
+    cmd.addReqParameter("--config").expect("path");
+
+#### addDefParameter(...) – Parameter with Default Value
+
+Defines a parameter that has a default value if it is not present on the command line.
+
+    ⚠️ Note: This does not mean the parameter is provided without an argument.
+    It means the parameter can be omitted entirely, and its value will default internally.
+
+    Typical for parameters like --directory where . (current directory) is a reasonable fallback.
+
+    Example:
+
+    cmd.addDefParameter("--directory", ".").expect("path");
 
