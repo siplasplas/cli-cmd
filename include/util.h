@@ -18,4 +18,26 @@ namespace cli
     void printTree(const Node& node, const std::string& prefix = "", bool isLastSibling = true);
 
     [[nodiscard]] std::string fmt(const char* format_str, ...);
+
+    enum ArgType {
+        BareIdentifier = 1,          // e.q. clone
+        ShortOption     = 2,         // e.q. -o
+        LongOption      = 3,         // e.q. --output
+        CompactFlags    = 4,         // e.q. -abc
+        Freeform        = 5,         // e.q. ./path/file.txt
+        ShortEquals     = 6,         // e.q. -o=/path
+        LongEquals      = 7,         // e.q. --output=/path
+        CompactEquals   = 8,         // e.q. -abc=out
+    };
+
+    enum ArgError {
+        InvalidEmpty             = -1,
+        InvalidDashOnly          = -2,
+        InvalidLongOptionSyntax  = -3,
+        InvalidCompactSyntax     = -4
+    };
+
+    int classifyToken(const std::string& s);
+    const char* to_string_argtype(int code);
+    std::ostream& operator<<(std::ostream& os, ArgType type);
 }
