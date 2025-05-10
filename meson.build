@@ -85,6 +85,7 @@ gtest_main = dependency('gtest_main', required: true)
 test_sources = files(
   'tests/test_arguments.cpp',
   'tests/test_similar.cpp',
+  'tests/test_flag.cpp',
 )
 
 test_exe = executable(

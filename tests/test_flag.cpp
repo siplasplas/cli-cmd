@@ -1,29 +1,38 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <nlohmann/json.hpp>
 #include "cli-cmd.hpp"
 
 using json = nlohmann::json;
 
-std::unique_ptr<cli::Application> makeAppWithClone() {
+// Dummy handler
+void clone_(const cli::Actual*) {}
+
+std::unique_ptr<cli::Application> makeAppWithFlags() {
     auto app = std::make_unique<cli::Application>("test");
 
     app->addCommand("clone")
         .desc("Clone a repository into a new directory")
         .addArg("repository", "url")
         .addArgs("directory", "path", 0, 1)
-        .handler([](const cli::Actual*) {}); // test stub
+        .addFlag("--local", "")
+        .addFlag("-v", "")
+        .handler(clone_);
 
     return app;
 }
 
-TEST(CliCmdTest, ArgumentsFormalDescription) {
-    auto app = makeAppWithClone();
+TEST(CliCmdTest, FlagsFormalDescription) {
+    auto app = makeAppWithFlags();
 
     json expectedFormal = R"({
         "arguments": [
             { "name": "repository", "type": "url" }
         ],
-        "flags": [],
+        "flags": [
+            { "name": "--local" },
+            { "name": "-v" }
+        ],
         "varargs": {
             "argument": {
                 "name": "directory",
@@ -38,21 +47,21 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
     EXPECT_EQ(expectedFormal, formal);
 }
 
-TEST(CliCmdTest, ArgumentsActualParsing) {
-    auto app = makeAppWithClone();
+TEST(CliCmdTest, FlagsParsingAndIgnored) {
+    auto app = makeAppWithFlags();
 
-    app->parse("mycli clone path -v -a -b -a");
+    app->parse("test clone url --local -v --other");
 
     json expectedActual = R"({
         "command": "clone",
         "error_number": 0,
-        "flag_set": [],
-        "ignored_flags": ["-v", "-a", "-b", "-a"],
+        "flag_set": ["--local", "-v"],
+        "ignored_flags": ["--other"],
         "arguments": [
             {
                 "name": "repository",
                 "type": "url",
-                "value": "path"
+                "value": "url"
             }
         ]
     })"_json;

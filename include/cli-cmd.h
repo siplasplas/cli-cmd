@@ -95,7 +95,7 @@ namespace cli
         Command& addArg(std::string name, std::string type);
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
-        void addFlag(const std::string& str, const std::string& desc);
+        Command& addFlag(const std::string& str, const std::string& desc);
         void execute();
         void print() const;
     };

@@ -37,11 +37,12 @@ namespace cli
         };
     }
 
-    INLINE void to_json(json& j, const Flag& v) {
+    INLINE void to_json(json& j, const Flag& f) {
         j = json{
-                    {"argument", v.name},
-                    {"argument", v.desc},
+                    {"name", f.name},
             };
+            if (!f.desc.empty())
+                j["desc"] = f.desc;
     }
 
     INLINE void to_json(json& j, const Actual& a) {
@@ -148,12 +149,10 @@ namespace cli
         return addArgs(std::move(name), std::move(type), min_n, std::numeric_limits<size_t>::max());
     }
 
-    INLINE void Command::addFlag(const std::string& str, const std::string& desc)
+    INLINE Command& Command::addFlag(const std::string& str, const std::string& desc)
     {
         if (str.empty())
             throw std::invalid_argument("command is empty ");
-        if (desc.empty())
-            throw std::invalid_argument("must be description for help");
         if (str[0] != '-')
             throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
         if (formal.availableFlagMap.find(str) != formal.availableFlagMap.end()) {
@@ -162,6 +161,7 @@ namespace cli
         }
         auto flag = std::make_shared<Flag>(str, desc);
         formal.availableFlagMap[str] = flag;
+        return *this;
     }
 
     INLINE void Command::execute()
