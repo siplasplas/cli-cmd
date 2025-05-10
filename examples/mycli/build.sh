@@ -1,0 +1,1 @@
+g++ -Wall -Wextra -I../../include -std=c++17 -O2 mycli.cpp -o mycli

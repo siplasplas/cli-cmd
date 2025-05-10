@@ -48,6 +48,16 @@ executable('first',
            dependencies : lib_dep,
 )
 
+mycli_sources = [
+  'examples/mycli/mycli.cpp',
+]
+
+executable('mycli',
+           mycli_sources,
+           dependencies : lib_dep,
+)
+
+
 likegit_sources = [
   'examples/likegit/main.cpp',
   'examples/likegit/developerfacing.cpp',

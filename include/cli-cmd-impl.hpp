@@ -77,6 +77,11 @@ namespace cli
         }
     }
 
+    INLINE std::optional<std::string> Actual::getParamValue(const std::string&)
+    {
+        throw std::logic_error("Not implemented");
+    }
+
     INLINE bool Actual::containsFlag(const std::string& opt) const
     {
         return flagSet.find(opt) != flagSet.end();
@@ -149,18 +154,18 @@ namespace cli
         return addArgs(std::move(name), std::move(type), min_n, std::numeric_limits<size_t>::max());
     }
 
-    INLINE Command& Command::addFlag(const std::string& str, const std::string& desc)
+    INLINE Command& Command::addFlag(const std::string& name, const std::string& /*shorthand*/, const std::string& desc)
     {
-        if (str.empty())
+        if (name.empty())
             throw std::invalid_argument("command is empty ");
-        if (str[0] != '-')
+        if (name[0] != '-')
             throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
-        if (formal.availableFlagMap.find(str) != formal.availableFlagMap.end()) {
+        if (formal.availableFlagMap.find(name) != formal.availableFlagMap.end()) {
             throw std::invalid_argument(fmt("flag %s already exists for command %s",
-                str.c_str(), m_name.c_str()));
+                name.c_str(), m_name.c_str()));
         }
-        auto flag = std::make_shared<Flag>(str, desc);
-        formal.availableFlagMap[str] = flag;
+        auto flag = std::make_shared<Flag>(name, desc);
+        formal.availableFlagMap[name] = flag;
         return *this;
     }
 
@@ -220,6 +225,12 @@ namespace cli
             flags->add(Node(arg));
         }
         printTree(root);
+    }
+
+    inline Command& Command::addParameter(const std::string& /*name*/, const std::string& /*shorthand*/, const std::string& /*expect*/,
+        const std::string& /*desc*/)
+    {
+        throw std::logic_error("not implemented");
     }
 
     inline std::string Flag::to_string() const
@@ -586,7 +597,7 @@ namespace cli
         auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
                 .addArgs("command", "", 0, 1);
         if (cmdDepth==3)
-            helpCmd.addFlag("--all", "all commands");
+            helpCmd.addFlag("--all", "", "all commands");
     }
 
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))

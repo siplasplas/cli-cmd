@@ -1,0 +1,7 @@
+# ignore files without extension
+*
+!*.*
+
+# must be after !*.*
+*.exe
+a.out

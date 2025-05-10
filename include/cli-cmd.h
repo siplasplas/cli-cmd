@@ -60,6 +60,7 @@ namespace cli
     struct Actual
     {
         virtual ~Actual() = default;
+        static std::optional<std::string> getParamValue(const std::string &key);
         std::string m_name;
         std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
@@ -96,7 +97,8 @@ namespace cli
         Command& addArg(std::string name, std::string type);
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
-        Command& addFlag(const std::string& str, const std::string& desc);
+        Command& addFlag(const std::string& name, const std::string& shorthand, const std::string& desc);
+        static Command& addParameter(const std::string& name, const std::string& shorthand, const std::string& expect, const std::string& desc);
         void execute();
         void print() const;
     };

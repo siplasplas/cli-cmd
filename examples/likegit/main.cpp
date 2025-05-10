@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
     addCommonCommands(app);
     auto cloneCmd = app.getCommand("clone");
     cloneCmd->handler(clone_);
-    cloneCmd->addFlag("-v", "be more verbose");
-    cloneCmd->addFlag("-q", "be more quiet");
+    cloneCmd->addFlag("--verbose", "-v", "be more verbose");
+    cloneCmd->addFlag("--quiet", "-q", "be more quiet");
     app.run(argc, argv);
     return 0;
 }

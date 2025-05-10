@@ -1,2 +1,2 @@
-./program mycmd
-./program mycmd param
+./first mycmd
+./first mycmd param

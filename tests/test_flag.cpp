@@ -15,8 +15,8 @@ std::unique_ptr<cli::Application> makeAppWithFlags() {
         .desc("Clone a repository into a new directory")
         .addArg("repository", "url")
         .addArgs("directory", "path", 0, 1)
-        .addFlag("--local", "")
-        .addFlag("-v", "")
+        .addFlag("--local", "","")
+        .addFlag("--verbose", "-v","")
         .handler(clone_);
 
     return app;
