@@ -31,7 +31,7 @@ TEST(FlagTest, FlagsFormalDescription) {
         ],
         "flags": [
             { "name": "--local" },
-            { "name": "-v" }
+            { "name": "--verbose" }
         ],
         "varargs": {
             "argument": {
@@ -55,7 +55,7 @@ TEST(FlagTest, FlagsParsingAndIgnored) {
     json expectedActual = R"({
         "command": "clone",
         "error_number": 0,
-        "flag_set": ["--local", "-v"],
+        "flag_set": ["--local", "--verbose"],
         "ignored_flags": ["--other"],
         "arguments": [
             {

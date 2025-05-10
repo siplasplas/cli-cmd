@@ -154,7 +154,7 @@ namespace cli
         return addArgs(std::move(name), std::move(type), min_n, std::numeric_limits<size_t>::max());
     }
 
-    INLINE Command& Command::addFlag(const std::string& name, const std::string& /*shorthand*/, const std::string& desc)
+    INLINE Command& Command::addFlag(const std::string& name, const std::string& shorthand, const std::string& desc)
     {
         if (name.empty())
             throw std::invalid_argument("command is empty ");
@@ -163,6 +163,13 @@ namespace cli
         if (formal.availableFlagMap.find(name) != formal.availableFlagMap.end()) {
             throw std::invalid_argument(fmt("flag %s already exists for command %s",
                 name.c_str(), m_name.c_str()));
+        }
+        if (!shorthand.empty())
+        {
+            auto it = app->shorthandMap.find(shorthand);
+            if (it != app->shorthandMap.end())
+                throw std::invalid_argument(fmt("shorthand %s already taken for option %s", shorthand.c_str(), it->second.c_str()));
+            app->shorthandMap[shorthand] = name;
         }
         auto flag = std::make_shared<Flag>(name, desc);
         formal.availableFlagMap[name] = flag;
@@ -250,10 +257,24 @@ namespace cli
             assert(!arg.empty());
             if (arg[0]=='-')
             {
-                if (formal.availableFlagMap.find(arg)  != formal.availableFlagMap.end())
-                    flagSet.insert(arg);
+                std::string flag;
+                if (arg[1] == '-')
+                    flag = arg;
                 else
-                    ignoredFlags.push_back(arg);
+                {
+                    auto it = app->shorthandMap.find(arg);
+                    if (it != app->shorthandMap.end()) {
+                        flag = it->second;
+                    } else
+                    {
+                        ignoredFlags.push_back(arg);
+                        continue;
+                    }
+                }
+                if (formal.availableFlagMap.find(flag)  != formal.availableFlagMap.end())
+                    flagSet.insert(flag);
+                else
+                    ignoredFlags.push_back(flag);
             }
             else
             {

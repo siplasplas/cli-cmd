@@ -124,6 +124,7 @@ namespace cli
 
     class Application {
         std::map<std::string, std::shared_ptr<Command>> commandMap;
+        std::map<std::string, std::string> shorthandMap;
         std::vector<std::shared_ptr<Command>> commands;
         std::vector<std::unique_ptr<Category>> categories;
         std::vector<std::unique_ptr<Category>> helpCategories;
