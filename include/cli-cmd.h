@@ -21,11 +21,7 @@ namespace cli
     void to_json(json& j, const ArgumentValue& v);
     void to_json(json& j, const Actual& a);
 
-    inline const char* errorMsg1 = "%s : %s is placeholder with positional arguments:";
-    inline const char* errorMsg2 = "%s : %s have %d arguments but minimal is %d";
-    inline const char* errorMsg3 = "%s : %s have %d arguments but maximal is %d";
-
-    using Action = std::function<void(const Actual*)>;
+    using Action = std::function<void(Actual*)>;
 
     class Flag
     {
@@ -62,6 +58,7 @@ namespace cli
 
     struct Actual
     {
+        virtual ~Actual() = default;
         std::string m_name;
         std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
@@ -69,6 +66,7 @@ namespace cli
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
         int errNumber = 0;
         std::optional<std::string> errorStr;
+        std::vector<std::string> mostSimilar;
         explicit Actual(std::string commandName): m_name(std::move(commandName)){}
     };
 
@@ -85,9 +83,10 @@ namespace cli
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
     public:
-        explicit Command(std::string name): Actual(std::move(name)) {}
+        Command(std::string name, Application* app): Actual(std::move(name)), app(app) {}
         Formal formal;
-        Application* app = nullptr;
+        Application* app;
+        void commandNotFound(const std::string &arg);
         json asJson();
         json formalAsJson();
         [[nodiscard]] std::string to_string() const;
@@ -97,7 +96,7 @@ namespace cli
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
         void addFlag(const std::string& str, const std::string& desc);
-        void execute() const;
+        void execute();
         void print() const;
     };
 
@@ -127,8 +126,8 @@ namespace cli
         std::vector<std::unique_ptr<Category>> helpCategories;
         static std::vector<std::string> findMostSimilar(const std::string& proposed, const std::vector<std::string> &keys);
         static std::vector<std::string> splitStringWithQuotes(const std::string& input);
+        friend class Command;
         friend class Category;
-        friend class Subcategory;
     public:
         /**
         * @var cmdDepth
@@ -208,13 +207,12 @@ namespace cli
         static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
         static void setArg(std::unordered_map<std::string, std::string> &args,
                            const std::string& name, int& arg, int min, int max);
-        void commandNotFound(const std::string &arg) const;
         void printCommands(const Actual* actual) const;
-        void commandHelp(const Actual* actual) const;
-        void proposeSimilar(const std::string &arg) const;
+        void commandHelp(Actual* actual);
+        [[nodiscard]] std::vector<std::string>  proposeSimilar(const std::string &arg) const;
     protected:
-        void help(const Actual*) const;
-        void mainCommandStub(const Actual*) const;
+        void help(Actual*);
+        void mainCommandStub(Actual*);
         void initSystemCommands();
     public:
         Application(std::string appName, const std::string& namedParams);

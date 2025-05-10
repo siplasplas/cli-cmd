@@ -9,6 +9,7 @@
 
 #include "cli-cmd.h"
 #include "distance.h"
+#include "error_codes.h"
 #include "util.h"
 
 namespace cli
@@ -92,6 +93,14 @@ namespace cli
         return j;
     }
 
+    INLINE void Command::commandNotFound(const std::string &arg)
+    {
+        errNumber = ErrorCode::TooFewArguments;
+        errorStr = fmt(ErrorMessage::UnknownCommand,
+            app->appName.c_str(), m_name.c_str(), app->appName.c_str(), app->appName.c_str());
+        mostSimilar = app->proposeSimilar(arg);
+    }
+
     INLINE std::string Command::to_string() const
     {
         std::string indent(3, ' ');
@@ -155,7 +164,7 @@ namespace cli
         formal.availableFlagMap[str] = flag;
     }
 
-    INLINE void Command::execute() const
+    INLINE void Command::execute()
     {
         if (!ignoredFlags.empty())
         {
@@ -172,9 +181,17 @@ namespace cli
         {
             if (errorStr)
                 std::cout << *errorStr << std::endl;
-            if (errNumber == 1)
+            if (errNumber == ErrorCode::MissingHandler)
                 for (const auto& arg : arguments)
                     std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
+            if (!mostSimilar.empty()) {
+                if (mostSimilar.size() > 1)
+                    std::cout << "The most similar commands are" << std::endl;
+                else
+                    std::cout << "The most similar command is" << std::endl;
+                for (const auto& similar : mostSimilar)
+                    std::cout << "     " << similar << std::endl;
+            }
         }
         else
         {
@@ -243,22 +260,22 @@ namespace cli
         }
         if (arguments.size() < formal.argList.size() + formal.vaArgs->min_n)
         {
-            errNumber = 2;
-            errorStr = fmt(errorMsg2,
+            errNumber = ErrorCode::TooFewArguments;
+            errorStr = fmt(ErrorMessage::TooFewArguments,
                 app->appName.c_str(), m_name.c_str(), arguments.size(),
                 formal.argList.size() + formal.vaArgs->min_n);
         }
         else if (arguments.size() > formal.argList.size() + formal.vaArgs->max_n)
         {
-            errNumber = 3;
-            errorStr = fmt(errorMsg3,
+            errNumber = ErrorCode::TooManyArguments;
+            errorStr = fmt(ErrorMessage::TooManyArguments,
                             app->appName.c_str(), m_name.c_str(), arguments.size(),
                             formal.argList.size() + formal.vaArgs->max_n);
         }
         else if (!m_handler)
         {
-            errNumber = 1;
-            errorStr = fmt(errorMsg1,app->appName.c_str(),m_name.c_str());
+            errNumber = ErrorCode::MissingHandler;
+            errorStr = fmt(ErrorMessage::MissingHandler, app->appName.c_str(),m_name.c_str());
         }
     }
 
@@ -285,7 +302,7 @@ namespace cli
     {
         checkCommandName(commandName);
         if (app->commandMap.find(commandName) == app->commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(commandName);
+            std::shared_ptr<Command> command = std::make_shared<Command>(commandName, app);
             command->app = app;
             commands.push_back(command);
             app->commandMap.emplace(commandName, commands.back());
@@ -379,28 +396,14 @@ namespace cli
             throw std::runtime_error("command not found: " + name);
     }
 
-    INLINE void Application::proposeSimilar(const std::string& arg) const
+    INLINE std::vector<std::string>  Application::proposeSimilar(const std::string& arg) const
     {
         std::vector<std::string> keys;
         keys.reserve(commandMap.size());
         std::transform(commandMap.begin(), commandMap.end(), std::back_inserter(keys),
                        [](const auto& pair) { return pair.first; });
         auto mostSimilar = findMostSimilar(arg, keys);
-        if (!mostSimilar.empty()) {
-            if (mostSimilar.size() > 1)
-                std::cout << "The most similar commands are" << std::endl;
-            else
-                std::cout << "The most similar command is" << std::endl;
-            for (const auto& similar : mostSimilar)
-                std::cout << "     " << similar << std::endl;
-        }
-    }
-
-    INLINE void Application::commandNotFound(const std::string &arg) const
-    {
-        std::cout << appName << ": '" << arg << "' is not a valid command see " <<
-                appName << " --help" << std::endl ;
-        proposeSimilar(arg);
+        return mostSimilar;
     }
 
     INLINE void Application::parse(const std::vector<std::string>& args)
@@ -438,7 +441,8 @@ namespace cli
             it = commandMap.find(args[1]);
             if (it == commandMap.end())
             {
-                commandNotFound(args[1]);
+                currentCommand = std::make_shared<Command>(args[1], this);
+                currentCommand->commandNotFound(args[1]);
             }
             else
             {
@@ -468,7 +472,7 @@ namespace cli
     INLINE Command& Application::addCommand(std::string name)
     {
         if (commandMap.find(name) == commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(name);
+            std::shared_ptr<Command> command = std::make_shared<Command>(name, this);
             command->app = this;
             commands.push_back(command);
             commandMap.emplace(name, commands.back());
@@ -513,14 +517,14 @@ namespace cli
         }
     }
 
-    INLINE void Application::commandHelp(const Actual* actual) const
+    INLINE void Application::commandHelp(Actual* actual)
     {
         auto arg = actual->arguments[0];
         auto it = commandMap.find(arg.value);
         if (it == commandMap.end())
         {
-            std::cout << fmt("command [%s] not exists", arg.value.c_str()) << std::endl;
-            proposeSimilar(arg.value);
+            auto* cmd = dynamic_cast<cli::Command*>(actual);
+            cmd->commandNotFound(arg.value);
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
@@ -530,7 +534,7 @@ namespace cli
     }
 
 
-    INLINE void Application::help(const Actual* actual) const
+    INLINE void Application::help(Actual* actual)
     {
         if (actual->arguments.empty())
             printCommands(actual);
@@ -538,7 +542,7 @@ namespace cli
             commandHelp(actual);
     }
 
-    INLINE void Application::mainCommandStub(const Actual* actual) const
+    INLINE void Application::mainCommandStub(Actual* actual)
     {
         if (cmdDepth == 0)
         {
@@ -565,10 +569,10 @@ namespace cli
     {
         if (cmdDepth == 0)
         {
-            Action actionStub = [this](const Actual* actual) {
+            Action actionStub = [this](Actual* actual) {
                 mainCommandStub(actual);
             };
-            mainCommand = std::make_shared<Command>(appName);
+            mainCommand = std::make_shared<Command>(appName, this);
             mainCommand->desc(appName);
             mainCommand->handler(actionStub);
             mainCommand->app = this;
@@ -576,7 +580,7 @@ namespace cli
             commandMap.emplace(appName, commands.back());
         }
 
-        Action actionHelp = [this](const Actual* actual) {
+        Action actionHelp = [this](Actual* actual) {
             help(actual);
         };
         auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
