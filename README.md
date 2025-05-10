@@ -44,8 +44,37 @@ Build with
 ```shell
   g++ -Wall -Wextra -I../../include -std=c++17 -O2 first.cpp -o program
 ```
+## Options
+### Terminology: Arguments, Options, Flags, and Parameters
 
-## Supported Command-Line Argument Formats
+This library uses precise terminology to clearly distinguish between different types of command-line inputs. These terms are used consistently throughout the API and documentation:
+```
+Term Meaning Example
+Argument   A positional input that does not start with - or --. Can be required or variadic.            mycli clone https://url
+Option     A generic term for anything starting with - or --. This includes both flags and parameters.  --verbose, --output=file
+Flag       A boolean switch that only signals presence (true if given, false if omitted).               --verbose, -v
+Parameter  An option that requires a value (e.g. a string, path, number).                               --output result.txt, -o x
+```
+#### Clarifications
+* All flags and parameters are referred to as options at the syntax level, but they differ in semantics.
+* An argument is always positional (e.g., a repository URL or a file path).
+* A parameter is similar to an argument, but it is attached to an option and always has a name (e.g., --output).
+* This library treats flags and parameters differently in parsing, validation, and error reporting.
+
+Example
+```
+mycli build src --release --output bin/app
+
+Token       Category    Notes
+build       Argument    Positional subcommand
+src         Argument    Positional input
+--release   Flag        Boolean switch
+--output    Parameter   Requires a value: bin/app
+```
+This clear separation allows the library to provide strong validation, smart error messages, 
+and advanced features like help filtering or JSON output for parsed input.
+
+### Supported Command-Line Argument Formats
 This CLI library supports five distinct formats of command-line arguments, 
 modeled after common conventions seen in tools like git, gcc, and UNIX-style CLI programs:
 
@@ -101,7 +130,7 @@ If the last character in the group is a parameter (takes a value), it must be la
    These are interpreted based on context - e.g., after -o, any value is accepted.
 
 
-## Declaring Optional, Required, and Defaulted Parameters
+### Declaring Optional, Required, and Defaulted Parameters
 
 This library provides three distinct methods for declaring parameters (key–value pairs) depending on how strictly they must appear on the command line:
 #### addParameter(...) – Optional Parameter
@@ -140,14 +169,14 @@ Defines a parameter that has a default value if it is not present on the command
     cmd.addDefParameter("--directory", ".").expect("path");
 
 
-## Option vs Flag vs Parameter
+### Option vs Flag vs Parameter
 
 In this library, the term option is used in a broad sense — it refers to both flags and parameters.
 
 However, for clarity and precision, it's helpful to distinguish between the two:
 ```
 Concept    Example                          Has Value?  Description
-Flag	   --verbose, -v                    ❌           A boolean switch: either present or not.
+Flag       --verbose, -v                    ❌           A boolean switch: either present or not.
 Parameter  --output file.txt, -o file.txt   ✅           An option that requires a value (e.g. a path, number, string).
 ```
 Terminology
