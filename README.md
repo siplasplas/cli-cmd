@@ -9,7 +9,11 @@ A C++ CLI argument parsing library inspired by Git/GCC, featuring:
 - Automatic help generation
 - Positional argument validation
 - Configurable parsing modes (Git/GCC style) (planning)
-- 
+
+## Prerequisites
+```shell
+   sudo apt install libgtest-dev libgmock-dev
+```
 ## Installation
 Add as submodule to yout repository.
 Library has two modes: header-only and link. 

@@ -79,17 +79,19 @@ executable('likegcc',
 )
 
 gtest_dep = dependency('gtest', required: true)
+gmock_dep = dependency('gmock', required: true)
 gtest_main = dependency('gtest_main', required: true)
 
 test_sources = files(
   'tests/test_arguments.cpp',
+  'tests/test_similar.cpp',
 )
 
 test_exe = executable(
   'cli_tests',
   test_sources,
   include_directories: inc,
-  dependencies: [gtest_dep, gtest_main, lib_dep],
+  dependencies: [gtest_dep, gtest_main, gmock_dep, lib_dep],
 )
 
 test('cli-tests', test_exe)

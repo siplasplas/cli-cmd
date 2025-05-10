@@ -95,7 +95,7 @@ namespace cli
 
     INLINE void Command::commandNotFound(const std::string &arg)
     {
-        errNumber = ErrorCode::TooFewArguments;
+        errNumber = ErrorCode::UnknownCommand;
         errorStr = fmt(ErrorMessage::UnknownCommand,
             app->appName.c_str(), m_name.c_str(), app->appName.c_str(), app->appName.c_str());
         mostSimilar = app->proposeSimilar(arg);
