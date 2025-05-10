@@ -37,8 +37,9 @@ TEST(ClassifyTokenTest, InvalidTokens) {
     EXPECT_EQ(classifyToken(""), ArgError::InvalidEmpty);
     EXPECT_EQ(classifyToken("-"), ArgError::InvalidDashOnly);
     EXPECT_EQ(classifyToken("--"), ArgError::InvalidLongOptionSyntax);
-    EXPECT_EQ(classifyToken("--abc"), ArgError::InvalidLongOptionSyntax);
+    EXPECT_EQ(classifyToken("--a"), ArgError::InvalidLongOptionSyntax);
     EXPECT_EQ(classifyToken("---"), ArgError::InvalidLongOptionSyntax);
+    EXPECT_EQ(classifyToken("---a"), ArgError::InvalidLongOptionSyntax);
     EXPECT_EQ(classifyToken("---abc"), ArgError::InvalidLongOptionSyntax);
     EXPECT_EQ(classifyToken("--bad-"), ArgError::InvalidLongOptionSyntax);
     EXPECT_EQ(classifyToken("--@invalid"), ArgError::InvalidLongOptionSyntax);

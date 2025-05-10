@@ -84,7 +84,7 @@ namespace cli
             auto eq = s.find('=');
             std::string key = eq == std::string::npos ? s.substr(2) : s.substr(2, eq - 2);
 
-            if (key.empty() || key.front() == '-' || key.back() == '-')
+            if (key.size() < 2 || key.front() == '-' || key.back() == '-')
                 return ArgError::InvalidLongOptionSyntax;
             for (char c : key) {
                 if (!(isAsciiAlnum(c) || c == '-'))

@@ -22,7 +22,7 @@ std::unique_ptr<cli::Application> makeAppWithFlags() {
     return app;
 }
 
-TEST(CliCmdTest, FlagsFormalDescription) {
+TEST(FlagTest, FlagsFormalDescription) {
     auto app = makeAppWithFlags();
 
     json expectedFormal = R"({
@@ -47,7 +47,7 @@ TEST(CliCmdTest, FlagsFormalDescription) {
     EXPECT_EQ(expectedFormal, formal);
 }
 
-TEST(CliCmdTest, FlagsParsingAndIgnored) {
+TEST(FlagTest, FlagsParsingAndIgnored) {
     auto app = makeAppWithFlags();
 
     app->parse("test clone url --local -v --other");
