@@ -13,7 +13,7 @@ A C++ CLI argument parsing library inspired by Git/GCC, featuring:
 
 ## Prerequisites
 ```shell
-   sudo apt install libgtest-dev libgmock-dev
+   sudo apt install libgtest-dev libgmock-dev nlohmann-json3-dev
 ```
 ## Installation
 Add as submodule to yout repository.
