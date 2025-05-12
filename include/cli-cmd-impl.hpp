@@ -48,7 +48,6 @@ namespace cli
     INLINE void to_json(json& j, const Actual& a) {
         j = json{
                 {"command", a.m_name},
-                {"ignored_flags", a.ignoredFlags},
                 {"flag_set", std::vector<std::string>(a.flagSet.begin(), a.flagSet.end())},
                 {"error_number", a.errNumber},
             };
@@ -153,10 +152,14 @@ namespace cli
 
     INLINE Command& Command::addFlag(const std::string& name, const std::string& shorthand, const std::string& desc)
     {
-        auto errStr = tokenError(name, ArgType::LongOption);
+        std::string errStr;
+        if (app->combineOpts || !shorthand.empty())
+            errStr = tokenError(name, ArgType::LongOption, app->combineOpts);
+        else
+            errStr = tokenError(name, {ArgType::LongOption, ArgType::GccOption}, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
-        errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty});
+        errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty}, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
         if (!shorthand.empty())
@@ -173,17 +176,6 @@ namespace cli
 
     INLINE void Command::execute()
     {
-        if (!ignoredFlags.empty())
-        {
-            std::cout << "ignored flags: [";
-            for (size_t i = 0; i < ignoredFlags.size(); ++i)
-            {
-                if (i>0)
-                    std::cout << " ";
-                std::cout << ignoredFlags[i];
-            }
-            std::cout << "]" << std::endl;
-        }
         if (errNumber)
         {
             if (errorStr)
@@ -191,6 +183,18 @@ namespace cli
             if (errNumber == ErrorCode::MissingHandler)
                 for (const auto& arg : arguments)
                     std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
+            else if (errNumber == ErrorCode::UnknownCommand) {
+                auto cmdHelp = app->getCommand("help");
+/*
+                todo
+                                cmdHelp->arguments.clear();
+                                Argument argument("command","");
+                                ArgumentValue argValue(argument, appName);
+                                cmdHelp->arguments.push_back(argValue);
+                                help(cmdHelp.get());
+ *
+ */
+            }
             if (!mostSimilar.empty()) {
                 if (mostSimilar.size() > 1)
                     std::cout << "The most similar commands are" << std::endl;
@@ -246,30 +250,45 @@ namespace cli
     {
         arguments.clear();
         size_t count = 0, varCount = 0;
+        //bool afterParameter = false;
         for (size_t i = start; i < args.size(); i++)
         {
             auto arg = args[i];
-            assert(!arg.empty());
-            if (arg[0]=='-')
-            {
-                std::string flag;
-                if (arg[1] == '-')
+            std::vector<int> expectedClasses = {BareIdentifier, Freeform};
+            //if (!afterParameter) //will be useful later
+                expectedClasses.insert(expectedClasses.end(), {ShortOption, LongOption});
+            auto errStr = tokenError(arg, expectedClasses, app->combineOpts);
+            if (!errStr.empty()) {
+                errorStr = errStr;
+                errNumber = ErrorCode::BadTokenForm;
+                return;
+            }
+            auto tokenClass = classifyToken(arg, app->combineOpts);
+            std::string flag;
+            switch (tokenClass) {
+                case LongOption:;
                     flag = arg;
-                else
-                {
+                    break;
+                case ShortOption:;
                     auto it = app->shorthandMap.find(arg);
                     if (it != app->shorthandMap.end()) {
                         flag = it->second;
                     } else
                     {
-                        ignoredFlags.push_back(arg);
-                        continue;
+                        errorStr = fmt(ErrorMessage::UnknownOption, arg.c_str());
+                        errNumber = ErrorCode::UnknownOption;
+                        return;
                     }
-                }
+                    break;
+            }
+            if (!flag.empty()) {
                 if (formal.availableFlagMap.find(flag)  != formal.availableFlagMap.end())
                     flagSet.insert(flag);
-                else
-                    ignoredFlags.push_back(flag);
+                else {
+                    errorStr = fmt(ErrorMessage::UnknownOption, flag.c_str());
+                    errNumber = ErrorCode::UnknownOption;
+                    return;
+                }
             }
             else
             {
@@ -441,7 +460,7 @@ namespace cli
             {
                 auto cmdHelp = getCommand("help");
                 cmdHelp->arguments.clear();
-                Argument argument("command","");
+                Argument argument("command","identifier");//todo
                 ArgumentValue argValue(argument, appName);
                 cmdHelp->arguments.push_back(argValue);
                 help(cmdHelp.get());
@@ -612,7 +631,6 @@ namespace cli
         setArg(args, "cmdDepth", cmdDepth, 0, 3);
         setArg(args, "combineOpts", combineOpts, 0, 1);
         setArg(args, "helpAtStart", helpAtStart, 0, 1);
-        setArg(args, "diagnostic", diagnostic, 0, 1);
         initSystemCommands();
     }
 

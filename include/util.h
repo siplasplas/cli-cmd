@@ -28,19 +28,22 @@ namespace cli
         ShortEquals     = 6,         // e.q. -o=/path
         LongEquals      = 7,         // e.q. --output=/path
         CompactEquals   = 8,         // e.q. -abc=out
+        GccOption       = 9,         // e.q -abc-def
+        GccEquals       = 10,        // e.q -abc-def=/path
     };
 
     enum ArgError {
         InvalidEmpty             = -1,
         InvalidDashOnly          = -2,
         InvalidLongOptionSyntax  = -3,
-        InvalidCompactSyntax     = -4
+        InvalidCompactSyntax     = -4,
+        InvalidGccOptionSyntax   = -5,
     };
 
-    int classifyToken(const std::string& s);
+    int classifyToken(const std::string& s, bool combineOpts);
     const char* to_string_argtype(int code);
     std::ostream& operator<<(std::ostream& os, ArgType type);
-    std::string tokenError(const std::string& token);
-    std::string tokenError(const std::string& token, int expectedType);
-    std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes);
+    std::string tokenError(const std::string& token, bool combineOpts);
+    std::string tokenError(const std::string& token, int expectedType, bool combineOpts);
+    std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes, bool combineOpts);
 }

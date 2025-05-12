@@ -41,13 +41,12 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
 TEST(CliCmdTest, ArgumentsActualParsing) {
     auto app = makeAppWithClone();
 
-    app->parse("mycli clone path -v -a -b -a");
+    app->parse("mycli clone path");
 
     json expectedActual = R"({
         "command": "clone",
         "error_number": 0,
         "flag_set": [],
-        "ignored_flags": ["-v", "-a", "-b", "-a"],
         "arguments": [
             {
                 "name": "repository",

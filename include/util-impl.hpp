@@ -66,7 +66,8 @@ namespace cli
         return std::isalnum(static_cast<unsigned char>(ch));
     }
 
-    INLINE int classifyToken(const std::string& s) {
+    INLINE int classifyToken(const std::string& s, bool combineOpts)
+    {
         if (s.empty()) return ArgError::InvalidEmpty;
         if (s == "-") return ArgError::InvalidDashOnly;
 
@@ -93,20 +94,25 @@ namespace cli
             return (eq != std::string::npos) ? ArgType::LongEquals : ArgType::LongOption;
         }
 
-        // Short option forms
-        if (s[0] == '-' && s.size() == 2 && isAsciiAlnum(s[1])) {
-            return ArgType::ShortOption;
-        }
-
-        if (s[0] == '-' && s.size() > 2) {
+        if (s[0] == '-' && s.size() > 1) {
             auto eq = s.find('=');
             std::string group = eq == std::string::npos ? s.substr(1) : s.substr(1, eq - 1);
 
+            if (!combineOpts) {
+                // GCC style: whole string after '-' interpreted as one option
+                // can have '-' inside
+                for (char c : group) {
+                    if (!isAsciiAlnum(c) && c != '-') return ArgError::InvalidGccOptionSyntax;
+                }
+                return (eq != std::string::npos) ? ArgType::GccEquals : ArgType::GccOption;
+            }
+
+            // Git-style compact flags (only letters/digits, without '-')
             for (char c : group) {
                 if (!isAsciiAlnum(c)) return ArgError::InvalidCompactSyntax;
             }
             if (group.size() == 1)
-                return ArgType::ShortEquals;
+                return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;
             else
                 return (eq != std::string::npos) ? ArgType::CompactEquals : ArgType::CompactFlags;
         }
@@ -125,10 +131,15 @@ namespace cli
         case ArgType::Freeform:       return "Freeform";
         case ArgType::ShortEquals:    return "ShortEquals";
         case ArgType::LongEquals:     return "LongEquals";
+        case ArgType::CompactEquals:  return "CompactEquals";
+        case ArgType::GccOption:      return "GccOption";
+        case ArgType::GccEquals:      return "GccEquals";
 
         case ArgError::InvalidEmpty:            return "InvalidEmpty";
         case ArgError::InvalidDashOnly:         return "InvalidDashOnly";
         case ArgError::InvalidLongOptionSyntax: return "InvalidLongOptionSyntax";
+        case ArgError::InvalidCompactSyntax:    return "InvalidCompactSyntax";
+        case ArgError::InvalidGccOptionSyntax:  return "InvalidGccOptionSyntax";
 
         default: return "<unknown>";
         }
@@ -138,22 +149,22 @@ namespace cli
         return os << to_string_argtype(static_cast<int>(type));
     }
 
-    INLINE std::string tokenError(const std::string& token) {
-        int type = classifyToken(token);
+    INLINE std::string tokenError(const std::string& token, bool combineOpts) {
+        int type = classifyToken(token, combineOpts);
         return (type < 0)
             ? std::string("Invalid token: ") + token + " (" + to_string_argtype(type) + ")"
             : "";
     }
 
-    INLINE std::string tokenError(const std::string& token, int expectedType) {
-        int type = classifyToken(token);
+    INLINE std::string tokenError(const std::string& token, int expectedType, bool combineOpts) {
+        int type = classifyToken(token, combineOpts);
         return (type != expectedType)
-            ? std::string("Expected ") + to_string_argtype(expectedType) + " but got " + to_string_argtype(type)
+            ? "Token " + token + " expected " + to_string_argtype(expectedType) + " but got " + to_string_argtype(type)
             : "";
     }
 
-    INLINE std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes) {
-        int type = classifyToken(token);
+    INLINE std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes, bool combineOpts) {
+        int type = classifyToken(token, combineOpts);
         for (int e : expectedTypes) {
             if (type == e) return "";
         }
@@ -162,7 +173,7 @@ namespace cli
             if (i > 0) list += ", ";
             list += to_string_argtype(expectedTypes[i]);
         }
-        return std::string("Expected one of: [") + list + "], but got " + to_string_argtype(type);
+        return "Token " + token + " expected one of: [" + list + "], but got " + to_string_argtype(type);
     }
 
 }

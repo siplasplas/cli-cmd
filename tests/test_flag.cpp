@@ -54,9 +54,8 @@ TEST(FlagTest, FlagsParsingAndIgnored) {
 
     json expectedActual = R"({
         "command": "clone",
-        "error_number": 0,
+        "error_number": 6,
         "flag_set": ["--local", "--verbose"],
-        "ignored_flags": ["--other"],
         "arguments": [
             {
                 "name": "repository",

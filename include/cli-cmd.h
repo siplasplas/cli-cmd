@@ -62,7 +62,6 @@ namespace cli
         virtual ~Actual() = default;
         static std::optional<std::string> getParamValue(const std::string &key);
         std::string m_name;
-        std::vector<std::string> ignoredFlags;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
@@ -167,7 +166,7 @@ namespace cli
          * - ❌ `-j4` (use `-j 4`)
          * - ✅ `-abc -j 4`
          */
-        int combineOpts = 0;
+        int combineOpts = 1;
         /**
          * @var helpAtStart
          * @brief Controls automatic help display when no commands/options are provided
@@ -192,19 +191,6 @@ namespace cli
          * ```
          */
         int helpAtStart = 0;
-        /**
-         * @var diagnostic
-         * @brief Enables diagnostic mode for command tree inspection
-         *
-         * Security levels:
-         * - 0 (default): Production mode - diagnostic commands disabled
-         * - 1: Debug mode - enables special diagnostic commands
-         *
-         * @warning Always set to 0 in production builds!
-         *
-         * @details When enabled (1), exposes diagnostic subcommands:
-         */
-        int diagnostic = 0;
     private:
         static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
         static void setArg(std::unordered_map<std::string, std::string> &args,
