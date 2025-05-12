@@ -117,8 +117,6 @@ namespace cli
         Category(Category&&) = default;
         Category& operator=(Category&&) = default;
         std::string to_string();
-        static  bool isAlphaNumOrDash(const std::string& str);
-        static void checkCommandName(const std::string& commandName);
         Command& addCommand(std::string commandName);
     };
 
@@ -233,7 +231,7 @@ namespace cli
         void run(int argc, char** argv);
         Category* addCategory(const std::string& caption);
         Category& addHelpCategory(const std::string& caption);
-        Command& addCommand(std::string name);
+        Command& addCommand(std::string commandName);
     };
 
 }

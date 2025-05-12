@@ -153,14 +153,12 @@ namespace cli
 
     INLINE Command& Command::addFlag(const std::string& name, const std::string& shorthand, const std::string& desc)
     {
-        if (name.empty())
-            throw std::invalid_argument("command is empty ");
-        if (name[0] != '-')
-            throw std::invalid_argument("flags must start with hyphen, use subcommands instead");
-        if (formal.availableFlagMap.find(name) != formal.availableFlagMap.end()) {
-            throw std::invalid_argument(fmt("flag %s already exists for command %s",
-                name.c_str(), m_name.c_str()));
-        }
+        auto errStr = tokenError(name, ArgType::LongOption);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
+        errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty});
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
         if (!shorthand.empty())
         {
             auto it = app->shorthandMap.find(shorthand);
@@ -308,28 +306,11 @@ namespace cli
         }
     }
 
-    INLINE bool Category::isAlphaNumOrDash(const std::string& str) {
-        return std::all_of(str.begin(), str.end(), [](unsigned char c) {
-            return std::isalnum(c) || c == '-';
-        });
-    }
-
-    INLINE  void Category::checkCommandName(const std::string& commandName)
-    {
-        if (commandName.empty())
-            throw std::runtime_error("command is empty ");
-        if (commandName[0] == '-')
-            throw std::runtime_error(fmt("command can't start with dash, use options or flags instead",
-                commandName.c_str()));
-        if (commandName.find(' ') != std::string::npos)
-            throw std::runtime_error(fmt("command [%s] can't contains spaces", commandName.c_str()));
-        if (!isAlphaNumOrDash(commandName))
-            throw std::runtime_error(fmt("command [%s] can't contains other characters than alpha-num and dash", commandName.c_str()));
-    }
-
     INLINE Command& Category::addCommand(std::string commandName)
     {
-        checkCommandName(commandName);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
         if (app->commandMap.find(commandName) == app->commandMap.end()) {
             std::shared_ptr<Command> command = std::make_shared<Command>(commandName, app);
             command->app = app;
@@ -341,7 +322,9 @@ namespace cli
 
     INLINE Category& Category::ref(const std::string& commandName)
     {
-        checkCommandName(commandName);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
         auto it = app->commandMap.find(commandName);
         if (it != app->commandMap.end()) {
             commands.push_back(it->second);
@@ -498,15 +481,18 @@ namespace cli
         execute();
     }
 
-    INLINE Command& Application::addCommand(std::string name)
+    INLINE Command& Application::addCommand(std::string commandName)
     {
-        if (commandMap.find(name) == commandMap.end()) {
-            std::shared_ptr<Command> command = std::make_shared<Command>(name, this);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
+        if (commandMap.find(commandName) == commandMap.end()) {
+            std::shared_ptr<Command> command = std::make_shared<Command>(commandName, this);
             command->app = this;
             commands.push_back(command);
-            commandMap.emplace(name, commands.back());
+            commandMap.emplace(commandName, commands.back());
             return *commands.back().get();
-        } else throw std::runtime_error("command already exist: " + name);
+        } else throw std::runtime_error("command already exist: " + commandName);
     }
 
     /**
