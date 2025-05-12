@@ -52,9 +52,6 @@ namespace cli
                 {"flag_set", std::vector<std::string>(a.flagSet.begin(), a.flagSet.end())},
                 {"error_number", a.errNumber},
             };
-        if (a.errorStr.has_value()) {
-            j["error_str"] = *a.errorStr;
-        }
         j["arguments"] = a.arguments;
     }
 
