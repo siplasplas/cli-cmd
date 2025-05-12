@@ -138,4 +138,31 @@ namespace cli
         return os << to_string_argtype(static_cast<int>(type));
     }
 
+    INLINE std::string tokenError(const std::string& token) {
+        int type = classifyToken(token);
+        return (type < 0)
+            ? std::string("Invalid token: ") + token + " (" + to_string_argtype(type) + ")"
+            : "";
+    }
+
+    INLINE std::string tokenError(const std::string& token, int expectedType) {
+        int type = classifyToken(token);
+        return (type != expectedType)
+            ? std::string("Expected ") + to_string_argtype(expectedType) + " but got " + to_string_argtype(type)
+            : "";
+    }
+
+    INLINE std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes) {
+        int type = classifyToken(token);
+        for (int e : expectedTypes) {
+            if (type == e) return "";
+        }
+        std::string list;
+        for (size_t i = 0; i < expectedTypes.size(); ++i) {
+            if (i > 0) list += ", ";
+            list += to_string_argtype(expectedTypes[i]);
+        }
+        return std::string("Expected one of: [") + list + "], but got " + to_string_argtype(type);
+    }
+
 }

@@ -44,3 +44,33 @@ TEST(ClassifyTokenTest, InvalidTokens) {
     EXPECT_EQ(classifyToken("--bad-"), ArgError::InvalidLongOptionSyntax);
     EXPECT_EQ(classifyToken("--@invalid"), ArgError::InvalidLongOptionSyntax);
 }
+
+
+TEST(TokenErrorTest, ValidTokenReturnsEmptyString) {
+    EXPECT_EQ(tokenError("clone"), "");
+    EXPECT_EQ(tokenError("-v"), "");
+    EXPECT_EQ(tokenError("--output"), "");
+    EXPECT_EQ(tokenError("-abc"), "");
+    EXPECT_EQ(tokenError("--log=debug"), "");
+    EXPECT_EQ(tokenError("-o=val"), "");
+}
+
+TEST(TokenErrorTest, InvalidTokenReturnsErrorString) {
+    EXPECT_FALSE(tokenError("").empty());
+    EXPECT_FALSE(tokenError("-").empty());
+    EXPECT_FALSE(tokenError("---").empty());
+    EXPECT_FALSE(tokenError("--a").empty()); // too short
+    EXPECT_FALSE(tokenError("--@invalid").empty());
+}
+
+TEST(TokenErrorTest, TokenMustMatchSingleType) {
+    EXPECT_EQ(tokenError("--config", ArgType::LongOption), "");
+    EXPECT_FALSE(tokenError("--config", ArgType::ShortOption).empty());
+    EXPECT_FALSE(tokenError("-v", ArgType::LongOption).empty());
+}
+
+TEST(TokenErrorTest, TokenMustMatchAnyOfMultipleTypes) {
+    EXPECT_EQ(tokenError("-v", {ArgType::ShortOption, ArgType::CompactFlags}), "");
+    EXPECT_EQ(tokenError("-abc", {ArgType::CompactFlags}), "");
+    EXPECT_FALSE(tokenError("--bad-option-", {ArgType::ShortOption, ArgType::CompactFlags}).empty());
+}
