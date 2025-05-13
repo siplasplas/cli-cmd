@@ -293,6 +293,41 @@ Then, when a command needs more control, override it locally.
 
 In most cases use "" as a description for local overrides, it will be copied from global.
 
+### ⚠️ Unknown Flags Are Not Ignored
+
+Unlike some CLI libraries that silently skip unrecognized flags, this library **does not ignore unknown options**. Instead, it reports an error with a clear message and (if possible) suggestions for valid alternatives.
+
+#### Why strict behavior?
+
+This design decision ensures unambiguous parsing, especially when supporting both **flags** and **parameters**:
+
+- A **flag** is a binary switch that does not consume any value (e.g. --verbose, -v).
+- A **parameter** expects a value (e.g. --output file.txt or --output=file.txt).
+
+If an unknown option were simply ignored:
+- The parser **would not know** whether to treat the **next token** as:
+    - a positional argument (if the option was a flag), or
+    - the **value of a parameter** (if the option was a parameter)
+
+This ambiguity can result in incorrect interpretation of user input, especially in mixed command-line styles (e.g. combining --flag, --param=value, and free arguments).
+
+#### Example:
+```shell
+  mycli build --opt file.txt input.cpp
+```
+- If --opt is unknown:
+    - Should file.txt be the value of --opt (if it were a parameter)?
+    - Or should it be treated as a positional argument (if --opt were a flag)?
+    - Ignoring --opt could break either interpretation.
+
+#### ✅ Solution:
+
+The parser stops and reports an error when encountering any unknown flag or parameter. This protects the integrity of argument resolution and makes help diagnostics more useful.
+```
+  error: unknown option --opt  
+  Did you mean: --output
+```
+
 ## Special Handling of `--help`
 
 Users are accustomed to calling `--help` instead of command `help` as an option to display usage information, 
