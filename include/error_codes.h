@@ -8,6 +8,7 @@ namespace cli::ErrorCode {
     inline constexpr int UnknownCommand      = 4;
     inline constexpr int BadTokenForm        = 5;
     inline constexpr int UnknownOption       = 6;
+    inline constexpr int RequiredParameterMissing = 7;
 
 } // namespace cli::ErrorCode
 
@@ -27,5 +28,8 @@ namespace cli::ErrorMessage {
 
     inline constexpr const char* UnknownOption =
         "error: unknown option `%s'";
+
+    inline constexpr const char* RequiredParameterMissing =
+        "error: required parameter missing `%s'";
 
 } // namespace cli::ErrorMessage

@@ -97,6 +97,7 @@ test_sources = files(
   'tests/test_similar.cpp',
   'tests/test_flag.cpp',
   'tests/test_token_classification.cpp',
+  'tests/test_parameters.cpp',
 )
 
 test_exe = executable(
