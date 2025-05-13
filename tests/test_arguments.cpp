@@ -25,12 +25,10 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
         ],
         "flags": [],
         "varargs": {
-            "argument": {
-                "name": "directory",
-                "type": "path"
-            },
             "min-n": 0,
-            "max-n": 1
+            "max-n": 1,
+            "name": "directory",
+            "type": "path"
         }
     })"_json;
 

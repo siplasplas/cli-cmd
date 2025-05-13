@@ -37,6 +37,7 @@ namespace cli
     {
         std::string name;
         std::string type;
+        Argument()= default;
         Argument(std::string name, std::string type): name(std::move(name)), type(std::move(type)) {}
     };
 
@@ -48,13 +49,13 @@ namespace cli
             argument(std::move(argument)), value(std::move(value)) {}
     };
 
-    struct VaArguments
+    struct VaArguments: public Argument
     {
-        Argument argument;
-        size_t min_n;
-        size_t max_n;
-        VaArguments(Argument argument, size_t min_n, size_t max_n):
-                    argument(std::move(argument)), min_n(min_n), max_n(max_n){}
+        size_t min_n = 0;
+        size_t max_n = 0;
+        VaArguments()= default;
+        VaArguments(std::string name, std::string type, size_t min_n, size_t max_n):
+            Argument(std::move(name), std::move(type)), min_n(min_n), max_n(max_n){}
     };
 
     struct Actual
@@ -75,7 +76,7 @@ namespace cli
     {
         std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
         std::vector<Argument> argList;
-        std::optional<VaArguments> vaArgs;
+        VaArguments vaArgs;
     };
 
     class Command: public Actual {
@@ -100,6 +101,9 @@ namespace cli
         Command& addArgs(std::string name, std::string type, size_t min_n);
         Command& addFlag(const std::string& name, const std::string& shorthand, const std::string& desc);
         static Command& addParameter(const std::string& name, const std::string& shorthand, const std::string& expect, const std::string& desc);
+        static Command &addReqParameter(const std::string&, const std::string&, const std::string&, const std::string&);
+        static Command &addDefParameter(const std::string&, const std::string&, const std::string&, const std::string&,
+                                 const std::string&);
         void execute();
         void print() const;
     };

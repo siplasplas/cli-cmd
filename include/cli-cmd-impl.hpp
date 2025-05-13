@@ -31,7 +31,8 @@ namespace cli
 
     INLINE void to_json(json& j, const VaArguments& v) {
         j = json{
-                    {"argument", v.argument},
+                    {"name", v.name},
+                    {"type", v.type},
                     {"min-n", v.min_n},
                     {"max-n", v.max_n},
         };
@@ -68,8 +69,8 @@ namespace cli
             {"arguments", f.argList}, // requires to_json(json&, const Argument&)
         };
 
-        if (f.vaArgs) {
-            j["varargs"] = *f.vaArgs; // requires to_json(json&, const VaArguments&)
+        if (f.vaArgs.max_n > 0) {
+            j["varargs"] = f.vaArgs; // requires to_json(json&, const VaArguments&)
         }
     }
 
@@ -124,7 +125,7 @@ namespace cli
         return *this;
     }
 
-    inline Command& Command::desc(const std::string& _desc)
+    INLINE Command& Command::desc(const std::string& _desc)
     {
         m_desc = _desc;
         return *this;
@@ -139,8 +140,7 @@ namespace cli
 
     INLINE Command& Command::addArgs(std::string name, std::string type, size_t min_n, size_t max_n)
     {
-        Argument argument(std::move(name), std::move(type));
-        VaArguments argVa(std::move(argument), min_n, max_n);
+        VaArguments argVa(std::move(name), std::move(type), min_n, max_n);
         this->formal.vaArgs = argVa;
         return *this;
     }
@@ -215,11 +215,11 @@ namespace cli
         {
             positional->add(Node(arg.name + " : " + arg.type));
         }
-        if (formal.vaArgs.has_value())
+        if (formal.vaArgs.max_n > 0)
         {
             positional = root.add(Node(fmt("VarPositional args: (min: %d, max: %d)",
-                        formal.vaArgs.value().min_n, formal.vaArgs.value().max_n)));
-            positional->add(Node(formal.vaArgs.value().argument.name + " : " + formal.vaArgs.value().argument.type));
+                        formal.vaArgs.min_n, formal.vaArgs.max_n)));
+            positional->add(Node(formal.vaArgs.name + " : " + formal.vaArgs.type));
         }
         Node* flags = root.add(Node("Flags"));
         for (const auto& arg: flagSet)
@@ -229,13 +229,25 @@ namespace cli
         printTree(root);
     }
 
-    inline Command& Command::addParameter(const std::string& /*name*/, const std::string& /*shorthand*/, const std::string& /*expect*/,
-        const std::string& /*desc*/)
+    INLINE Command& Command::addParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
+        const std::string& /*expect*/, const std::string& /*desc*/)
     {
         throw std::logic_error("not implemented");
     }
 
-    inline std::string Flag::to_string() const
+    INLINE Command& Command::addReqParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
+        const std::string& /*expect*/, const std::string& /*desc*/)
+    {
+        throw std::logic_error("not implemented");
+    }
+
+    INLINE Command& Command::addDefParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
+        const std::string& /*defValue*/, const std::string& /*expect*/, const std::string& /*desc*/)
+    {
+        throw std::logic_error("not implemented");
+    }
+
+    INLINE std::string Flag::to_string() const
     {
         std::string indent(3, ' ');
         std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
@@ -294,25 +306,25 @@ namespace cli
                     arguments.emplace_back(formalArgument, arg);
                 } else
                 {
-                    Argument &formalArgument = formal.vaArgs->argument;
+                    Argument &formalArgument = formal.vaArgs;
                     arguments.emplace_back(formalArgument, arg);
                     varCount++;
                 }
             }
         }
-        if (arguments.size() < formal.argList.size() + formal.vaArgs->min_n)
+        if (arguments.size() < formal.argList.size() + formal.vaArgs.min_n)
         {
             errNumber = ErrorCode::TooFewArguments;
             errorStr = fmt(ErrorMessage::TooFewArguments,
                 app->appName.c_str(), m_name.c_str(), arguments.size(),
-                formal.argList.size() + formal.vaArgs->min_n);
+                formal.argList.size() + formal.vaArgs.min_n);
         }
-        else if (arguments.size() > formal.argList.size() + formal.vaArgs->max_n)
+        else if (arguments.size() > formal.argList.size() + formal.vaArgs.max_n)
         {
             errNumber = ErrorCode::TooManyArguments;
             errorStr = fmt(ErrorMessage::TooManyArguments,
                             app->appName.c_str(), m_name.c_str(), arguments.size(),
-                            formal.argList.size() + formal.vaArgs->max_n);
+                            formal.argList.size() + formal.vaArgs.max_n);
         }
         else if (!m_handler)
         {
