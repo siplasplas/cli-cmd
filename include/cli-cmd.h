@@ -83,6 +83,8 @@ namespace cli
         Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
         friend class Application;
+        void printSimilars();
+        void printErrors();
     public:
         Command(std::string name, Application* app): Actual(std::move(name)), app(app) {}
         Formal formal;

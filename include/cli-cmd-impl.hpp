@@ -174,40 +174,36 @@ namespace cli
         return *this;
     }
 
+    INLINE void Command::printSimilars() {
+        if (!mostSimilar.empty()) {
+            if (mostSimilar.size() > 1)
+                std::cout << "The most similar commands are" << std::endl;
+            else
+                std::cout << "The most similar command is" << std::endl;
+            for (const auto& similar : mostSimilar)
+                std::cout << "     " << similar << std::endl;
+        }
+    }
+
+    INLINE void Command::printErrors() {
+        if (errorStr)
+            std::cout << *errorStr << std::endl;
+        if (errNumber == ErrorCode::MissingHandler)
+            for (const auto& arg : arguments)
+                std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
+        else if (errNumber == ErrorCode::UnknownCommand) {
+            auto cmdHelp = app->getCommand("help");
+            printSimilars();
+        }
+    }
+
     INLINE void Command::execute()
     {
         if (errNumber)
-        {
-            if (errorStr)
-                std::cout << *errorStr << std::endl;
-            if (errNumber == ErrorCode::MissingHandler)
-                for (const auto& arg : arguments)
-                    std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
-            else if (errNumber == ErrorCode::UnknownCommand) {
-                auto cmdHelp = app->getCommand("help");
-/*
-                todo
-                                cmdHelp->arguments.clear();
-                                Argument argument("command","");
-                                ArgumentValue argValue(argument, appName);
-                                cmdHelp->arguments.push_back(argValue);
-                                help(cmdHelp.get());
- *
- */
-            }
-            if (!mostSimilar.empty()) {
-                if (mostSimilar.size() > 1)
-                    std::cout << "The most similar commands are" << std::endl;
-                else
-                    std::cout << "The most similar command is" << std::endl;
-                for (const auto& similar : mostSimilar)
-                    std::cout << "     " << similar << std::endl;
-            }
-        }
+            printErrors();
         else
-        {
             m_handler(this);
-        }
+
     }
 
     INLINE void Command::print() const
@@ -460,7 +456,7 @@ namespace cli
             {
                 auto cmdHelp = getCommand("help");
                 cmdHelp->arguments.clear();
-                Argument argument("command","identifier");//todo
+                Argument argument("command","identifier");
                 ArgumentValue argValue(argument, appName);
                 cmdHelp->arguments.push_back(argValue);
                 help(cmdHelp.get());
@@ -557,8 +553,10 @@ namespace cli
         auto it = commandMap.find(arg.value);
         if (it == commandMap.end())
         {
-            auto* cmd = dynamic_cast<cli::Command*>(actual);
+            auto cmd = std::make_shared<Command>(arg.value, this);
             cmd->commandNotFound(arg.value);
+            cmd->printErrors();
+            return;
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
@@ -618,7 +616,7 @@ namespace cli
             help(actual);
         };
         auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
-                .addArgs("command", "", 0, 1);
+                .addArgs("command", "identifier", 0, 1);
         if (cmdDepth==3)
             helpCmd.addFlag("--all", "", "all commands");
     }
