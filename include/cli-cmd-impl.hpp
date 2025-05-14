@@ -40,10 +40,10 @@ namespace cli
 
     INLINE void to_json(json& j, const Flag& f) {
         j = json{
-                    {"name", f.name},
+                    {"name", f.name()},
             };
-            if (!f.desc.empty())
-                j["desc"] = f.desc;
+            if (!f.description().empty())
+                j["desc"] = f.description();
     }
 
     INLINE void to_json(json& j, const Actual& a) {
@@ -250,7 +250,8 @@ namespace cli
     INLINE std::string Flag::to_string() const
     {
         std::string indent(3, ' ');
-        std::string result =  indent + name + std::string(std::max(1, 10 - static_cast<int>(name.size())), ' ') + desc;
+        std::string result =  indent + name() + std::string(std::max(1, 10 - static_cast<int>(name().size())), ' ')
+                + description();
         return result;
     }
 

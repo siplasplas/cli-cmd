@@ -24,13 +24,34 @@ namespace cli
 
     using Action = std::function<void(Actual*)>;
 
-    class Flag
+    enum class OptionKind { Flag, Parameter };
+
+    class Option {
+    protected:
+        std::string m_name;
+        std::string m_shorthand;
+        std::string m_description;
+    public:
+        Option(std::string name, std::string description)
+            : m_name(std::move(name)), m_description(std::move(description)) {}
+
+        virtual ~Option() = default;
+
+        [[nodiscard]] const std::string& name() const { return m_name; }
+        [[nodiscard]] const std::string& description() const { return m_description; }
+
+        [[nodiscard]] virtual OptionKind kind() const = 0;
+    };
+
+
+    class Flag: public Option
     {
     public:
-        Flag(std::string name,  std::string desc):
-            name(std::move(name)), desc(std::move(desc)) {}
-        const std::string name, desc;
+        Flag(std::string name, std::string description): Option(std::move(name), std::move(description)){}
         [[nodiscard]] std::string to_string() const;
+        [[nodiscard]] OptionKind kind() const override {
+            return OptionKind::Flag;
+        };
     };
 
     struct Argument
