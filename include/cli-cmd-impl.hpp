@@ -38,12 +38,41 @@ namespace cli
         };
     }
 
+
+    INLINE const char* to_string_flagmode(FlagMode p) {
+        switch (p) {
+            case FlagMode::Present:  return "Present";
+            case FlagMode::Hidden:    return "Hidden";
+            default: return "<unknown>";
+        }
+    }
+
+    INLINE const char* to_string_parametermode(ParameterMode p) {
+        switch (p) {
+            case ParameterMode::Optional:  return "Optional";
+            case ParameterMode::Required:  return "Required";
+            case ParameterMode::Defaulted: return "Defaulted";
+            case ParameterMode::Hidden:    return "Hidden";
+            default: return "<unknown>";
+        }
+    }
+
     INLINE void to_json(json& j, const Flag& f) {
         j = json{
                     {"name", f.name()},
+                    {"flagMode", to_string_flagmode(f.flagMode())},
             };
             if (!f.description().empty())
                 j["desc"] = f.description();
+    }
+
+    INLINE void to_json(json& j, const Parameter& p) {
+        j = json{
+                    {"name", p.name()},
+                    {"parameterMode", to_string_parametermode(p.parameterMode())},
+                };
+        if (!p.description().empty())
+            j["desc"] = p.description();
     }
 
     INLINE void to_json(json& j, const Actual& a) {
@@ -58,9 +87,18 @@ namespace cli
     INLINE void to_json(json& j, const Formal& f) {
         // serialize flag map (flattened to list)
         json flags = json::array();
-        for (const auto& [name, flagPtr] : f.availableFlagMap) {
-            if (flagPtr) {
-                flags.push_back(*flagPtr.get()); // requires to_json(json&, const Flag&)
+        json parameters = json::array();
+        for (const auto& [name, ptr] : f.optionMap) {
+            assert(ptr);
+            auto rawPtr = ptr.get();
+            if (ptr->kind() == OptionKind::Flag)
+            {
+                auto flagPtr = dynamic_cast<Flag*>(rawPtr);
+                flags.push_back(*flagPtr);
+            } else if (ptr->kind() == OptionKind::Parameter)
+            {
+                auto parameterPtr = dynamic_cast<Parameter*>(rawPtr);
+                parameters.push_back(*parameterPtr);
             }
         }
 
@@ -170,7 +208,7 @@ namespace cli
             app->shorthandMap[shorthand] = name;
         }
         auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
-        formal.availableFlagMap[name] = flag;
+        formal.optionMap[name] = flag;
         return *this;
     }
 
@@ -298,7 +336,7 @@ namespace cli
                     break;
             }
             if (!flag.empty()) {
-                if (formal.availableFlagMap.find(flag)  != formal.availableFlagMap.end())
+                if (formal.optionMap.find(flag)  != formal.optionMap.end())
                     flagSet.insert(flag);
                 else {
                     errorStr = fmt(ErrorMessage::UnknownOption, flag.c_str());
@@ -580,7 +618,7 @@ namespace cli
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
-        for (const auto& [key, opt] : cmd->formal.availableFlagMap) {
+        for (const auto& [key, opt] : cmd->formal.optionMap) {
             std::cout << opt->to_string() << std::endl;
         }
     }

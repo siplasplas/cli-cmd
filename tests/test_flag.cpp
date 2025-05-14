@@ -30,8 +30,14 @@ TEST(FlagTest, FlagsFormalDescription) {
             { "name": "repository", "type": "url" }
         ],
         "flags": [
-            { "name": "--local" },
-            { "name": "--verbose" }
+            {
+                "flagMode": "Present",
+                "name": "--local"
+            },
+            {
+                "flagMode": "Present",
+                "name": "--verbose"
+            }
         ],
         "varargs": {
             "min-n": 0,

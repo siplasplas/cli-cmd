@@ -26,6 +26,11 @@ namespace cli
 
     enum class OptionKind { Flag, Parameter };
 
+    enum class FlagMode {
+        Present,
+        Hidden
+    };
+
     enum class ParameterMode {
         Optional,
         Required,
@@ -33,16 +38,9 @@ namespace cli
         Hidden
     };
 
-    enum class FlagMode {
-        Present,
-        Hidden
-    };
-
-
     class Option {
     protected:
         std::string m_name;
-        std::string m_shorthand;
         std::string m_description;
     public:
         Option(std::string name, std::string description)
@@ -71,6 +69,9 @@ namespace cli
         [[nodiscard]] OptionKind kind() const override {
             return OptionKind::Flag;
         };
+        [[nodiscard]] FlagMode flagMode() const{
+            return m_flagMode;
+        }
     };
 
     class Parameter: public Option
@@ -92,6 +93,9 @@ namespace cli
         [[nodiscard]] OptionKind kind() const override {
             return OptionKind::Parameter;
         };
+        [[nodiscard]] ParameterMode parameterMode() const{
+            return m_parameterMode;
+        }
     };
 
     struct Argument
@@ -135,7 +139,7 @@ namespace cli
 
     struct Formal
     {
-        std::map<std::string, std::shared_ptr<Flag>> availableFlagMap;
+        std::map<std::string, std::shared_ptr<Option>> optionMap;
         std::vector<Argument> argList;
         VaArguments vaArgs;
     };
