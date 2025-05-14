@@ -169,7 +169,7 @@ namespace cli
                 throw std::invalid_argument(fmt("shorthand %s already taken for option %s", shorthand.c_str(), it->second.c_str()));
             app->shorthandMap[shorthand] = name;
         }
-        auto flag = std::make_shared<Flag>(name, desc);
+        auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
         formal.availableFlagMap[name] = flag;
         return *this;
     }
@@ -249,6 +249,13 @@ namespace cli
 
     INLINE std::string Flag::to_string() const
     {
+        std::string indent(3, ' ');
+        std::string result =  indent + name() + std::string(std::max(1, 10 - static_cast<int>(name().size())), ' ')
+                + description();
+        return result;
+    }
+
+    INLINE std::string Parameter::to_string() const {
         std::string indent(3, ' ');
         std::string result =  indent + name() + std::string(std::max(1, 10 - static_cast<int>(name().size())), ' ')
                 + description();

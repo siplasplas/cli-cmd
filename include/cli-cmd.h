@@ -26,6 +26,19 @@ namespace cli
 
     enum class OptionKind { Flag, Parameter };
 
+    enum class ParameterMode {
+        Optional,
+        Required,
+        Defaulted,
+        Hidden
+    };
+
+    enum class FlagMode {
+        Present,
+        Hidden
+    };
+
+
     class Option {
     protected:
         std::string m_name;
@@ -39,18 +52,45 @@ namespace cli
 
         [[nodiscard]] const std::string& name() const { return m_name; }
         [[nodiscard]] const std::string& description() const { return m_description; }
-
+        [[nodiscard]] virtual std::string to_string() const = 0;
         [[nodiscard]] virtual OptionKind kind() const = 0;
     };
 
 
     class Flag: public Option
     {
+        FlagMode m_flagMode;
     public:
-        Flag(std::string name, std::string description): Option(std::move(name), std::move(description)){}
-        [[nodiscard]] std::string to_string() const;
+        Flag(std::string name, std::string description, FlagMode flagMode)
+            : Option(std::move(name), std::move(description)),m_flagMode(flagMode) {}
+
+        Flag(const Flag& base, FlagMode overrideMode)
+            : Option(base.name(), base.description()), m_flagMode(overrideMode) {}
+
+        [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] OptionKind kind() const override {
             return OptionKind::Flag;
+        };
+    };
+
+    class Parameter: public Option
+    {
+        std::string m_expect;
+        ParameterMode m_parameterMode;
+        std::string m_default;
+    public:
+        Parameter(std::string name, std::string description, std::string expectType, ParameterMode parameterMode,
+                std::string defVal = "")
+                : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
+                m_parameterMode(parameterMode), m_default(std::move(defVal)){}
+
+        Parameter(const Parameter& base, ParameterMode overrideMode, std::string defVal = "")
+               : Option(base.name(), base.description()),
+                m_expect(base.m_expect),m_parameterMode(overrideMode), m_default(std::move(defVal)) {}
+
+        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] OptionKind kind() const override {
+            return OptionKind::Parameter;
         };
     };
 
