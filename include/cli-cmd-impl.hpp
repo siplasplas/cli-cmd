@@ -122,8 +122,7 @@ namespace cli
         return flagSet.find(opt) != flagSet.end();
     }
 
-    inline void Formal::addFlag(Application *app, const std::string &name, const std::string &shorthand,
-        const std::string &desc) {
+    INLINE void Formal::checkNames(Application *app, const std::string &name, const std::string &shorthand) {
         std::string errStr;
         if (app->combineOpts || !shorthand.empty())
             errStr = tokenError(name, ArgType::LongOption, app->combineOpts);
@@ -134,6 +133,9 @@ namespace cli
         errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty}, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
+    }
+
+    INLINE void Formal::addShorthand(Application *app, const std::string &name, const std::string &shorthand) {
         if (!shorthand.empty())
         {
             auto it = app->shorthandMap.find(shorthand);
@@ -141,8 +143,24 @@ namespace cli
                 throw std::invalid_argument(fmt("shorthand %s already taken for option %s", shorthand.c_str(), it->second.c_str()));
             app->shorthandMap[shorthand] = name;
         }
+    }
+
+    INLINE void Formal::addFlag(Application *app, const std::string &name, const std::string &shorthand,
+                                const std::string &desc)
+    {
+        checkNames(app, name, shorthand);
+        addShorthand(app, name, shorthand);
         auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
         optionMap[name] = flag;
+    }
+
+    INLINE void Formal::addParameter(Application *app, const std::string &name, const std::string &shorthand,
+        const std::string &defValue, const std::string &expect, ParameterMode parameterMode, const std::string &desc)
+    {
+        checkNames(app, name, shorthand);
+        addShorthand(app, name, shorthand);
+        auto parameter = std::make_shared<Parameter>(name, desc, defValue, expect, parameterMode);
+        optionMap[name] = parameter;
     }
 
     INLINE json Command::asJson()
@@ -271,22 +289,25 @@ namespace cli
         printTree(root);
     }
 
-    INLINE Command& Command::addParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
-        const std::string& /*expect*/, const std::string& /*desc*/)
+    INLINE Command& Command::addParameter(const std::string& name, const std::string& shorthand,
+        const std::string& expect, const std::string& desc)
     {
-        throw std::logic_error("not implemented");
+        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        return *this;
     }
 
-    INLINE Command& Command::addReqParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
-        const std::string& /*expect*/, const std::string& /*desc*/)
+    INLINE Command& Command::addReqParameter(const std::string& name, const std::string& shorthand,
+        const std::string& expect, const std::string& desc)
     {
-        throw std::logic_error("not implemented");
+        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Required, desc);
+        return *this;
     }
 
-    INLINE Command& Command::addDefParameter(const std::string& /*name*/, const std::string& /*shorthand*/,
-        const std::string& /*defValue*/, const std::string& /*expect*/, const std::string& /*desc*/)
+    INLINE Command& Command::addDefParameter(const std::string& name, const std::string& shorthand,
+        const std::string& defValue, const std::string& expect, const std::string& desc)
     {
-        throw std::logic_error("not implemented");
+        formal.addParameter(app, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
+        return *this;
     }
 
     INLINE std::string Flag::to_string() const
@@ -543,7 +564,8 @@ namespace cli
 
     INLINE void Application::parse(const std::string& line)
     {
-        parse(splitStringWithQuotes(line));
+        const auto args = splitStringWithQuotes(line);
+        parse(args);
     }
 
     INLINE void Application::parse(int argc, char** argv)

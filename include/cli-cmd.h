@@ -80,8 +80,8 @@ namespace cli
         ParameterMode m_parameterMode;
         std::string m_default;
     public:
-        Parameter(std::string name, std::string description, std::string expectType, ParameterMode parameterMode,
-                std::string defVal = "")
+        Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
+            ParameterMode parameterMode)
                 : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
                 m_parameterMode(parameterMode), m_default(std::move(defVal)){}
 
@@ -142,7 +142,12 @@ namespace cli
         std::map<std::string, std::shared_ptr<Option>> optionMap;
         std::vector<Argument> argList;
         VaArguments vaArgs;
-        void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
+            void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
+        void addParameter(Application * app, const std::string& name, const std::string& shorthand,
+            const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
+    private:
+        static void checkNames(Application *app, const std::string &name, const std::string &shorthand);
+        static void addShorthand(Application *app, const std::string &name, const std::string &shorthand);
     };
 
     class Command: public Actual {
@@ -166,9 +171,9 @@ namespace cli
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
         Command& addFlag(const std::string& name, const std::string& shorthand, const std::string& desc);
-        static Command& addParameter(const std::string& name, const std::string& shorthand, const std::string& expect, const std::string& desc);
-        static Command &addReqParameter(const std::string&, const std::string&, const std::string&, const std::string&);
-        static Command &addDefParameter(const std::string&, const std::string&, const std::string&, const std::string&,
+        Command& addParameter(const std::string& name, const std::string& shorthand, const std::string& expect, const std::string& desc);
+        Command &addReqParameter(const std::string&, const std::string&, const std::string&, const std::string&);
+        Command &addDefParameter(const std::string&, const std::string&, const std::string&, const std::string&,
                                  const std::string&);
         void execute();
         void print() const;

@@ -58,7 +58,7 @@ namespace cli
         }
     }
 
-    inline bool isAsciiAlpha(char ch) {
+    INLINE bool isAsciiAlpha(char ch) {
         return std::isalpha(static_cast<unsigned char>(ch));
     }
 

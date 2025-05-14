@@ -14,7 +14,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
     app.parse("test build -o out.txt");
 
     auto j = app.currentCommand->asJson();
-    ASSERT_EQ(j["parameters"]["--output"], "out.txt");
+    ASSERT_EQ("out.txt", j["parameters"]["--output"]);
 }
 
 TEST(ParameterTest, RequiredParameterMissing) {
@@ -25,7 +25,7 @@ TEST(ParameterTest, RequiredParameterMissing) {
 
     app.parse("test build");
     auto& a1 = app.currentCommand;
-    EXPECT_EQ(a1->errNumber, cli::ErrorCode::RequiredParameterMissing);
+    EXPECT_EQ(cli::ErrorCode::RequiredParameterMissing, a1->errNumber);
 }
 
 TEST(ParameterTest, DefaultParameterUsed) {
@@ -37,5 +37,5 @@ TEST(ParameterTest, DefaultParameterUsed) {
     app.parse("test build");
 
     auto j = app.currentCommand->asJson();
-    ASSERT_EQ(j["parameters"]["--log"], "default.log");
+    ASSERT_EQ( "default.log", j["parameters"]["--log"]);
 }
