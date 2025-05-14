@@ -142,6 +142,7 @@ namespace cli
         std::map<std::string, std::shared_ptr<Option>> optionMap;
         std::vector<Argument> argList;
         VaArguments vaArgs;
+        void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
     };
 
     class Command: public Actual {
@@ -192,8 +193,8 @@ namespace cli
 
     class Application {
         std::map<std::string, std::shared_ptr<Command>> commandMap;
-        std::map<std::string, std::string> shorthandMap;
         std::vector<std::shared_ptr<Command>> commands;
+        Formal formal;
         std::vector<std::unique_ptr<Category>> categories;
         std::vector<std::unique_ptr<Category>> helpCategories;
         static std::vector<std::string> findMostSimilar(const std::string& proposed, const std::vector<std::string> &keys);
@@ -274,6 +275,7 @@ namespace cli
         void mainCommandStub(Actual*);
         void initSystemCommands();
     public:
+        std::map<std::string, std::string> shorthandMap;
         Application(std::string appName, const std::string& namedParams);
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}

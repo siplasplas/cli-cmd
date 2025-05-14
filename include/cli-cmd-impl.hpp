@@ -122,6 +122,29 @@ namespace cli
         return flagSet.find(opt) != flagSet.end();
     }
 
+    inline void Formal::addFlag(Application *app, const std::string &name, const std::string &shorthand,
+        const std::string &desc) {
+        std::string errStr;
+        if (app->combineOpts || !shorthand.empty())
+            errStr = tokenError(name, ArgType::LongOption, app->combineOpts);
+        else
+            errStr = tokenError(name, {ArgType::LongOption, ArgType::GccOption}, app->combineOpts);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
+        errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty}, app->combineOpts);
+        if (!errStr.empty())
+            throw std::invalid_argument(errStr);
+        if (!shorthand.empty())
+        {
+            auto it = app->shorthandMap.find(shorthand);
+            if (it != app->shorthandMap.end())
+                throw std::invalid_argument(fmt("shorthand %s already taken for option %s", shorthand.c_str(), it->second.c_str()));
+            app->shorthandMap[shorthand] = name;
+        }
+        auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
+        optionMap[name] = flag;
+    }
+
     INLINE json Command::asJson()
     {
         json j = *this;
@@ -190,25 +213,7 @@ namespace cli
 
     INLINE Command& Command::addFlag(const std::string& name, const std::string& shorthand, const std::string& desc)
     {
-        std::string errStr;
-        if (app->combineOpts || !shorthand.empty())
-            errStr = tokenError(name, ArgType::LongOption, app->combineOpts);
-        else
-            errStr = tokenError(name, {ArgType::LongOption, ArgType::GccOption}, app->combineOpts);
-        if (!errStr.empty())
-            throw std::invalid_argument(errStr);
-        errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty}, app->combineOpts);
-        if (!errStr.empty())
-            throw std::invalid_argument(errStr);
-        if (!shorthand.empty())
-        {
-            auto it = app->shorthandMap.find(shorthand);
-            if (it != app->shorthandMap.end())
-                throw std::invalid_argument(fmt("shorthand %s already taken for option %s", shorthand.c_str(), it->second.c_str()));
-            app->shorthandMap[shorthand] = name;
-        }
-        auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
-        formal.optionMap[name] = flag;
+        formal.addFlag(app, name, shorthand, desc);
         return *this;
     }
 
@@ -241,7 +246,6 @@ namespace cli
             printErrors();
         else
             m_handler(this);
-
     }
 
     INLINE void Command::print() const
