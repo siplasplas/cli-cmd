@@ -333,12 +333,20 @@ namespace cli
     }
 
     INLINE Parameter::Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
-    ParameterMode parameterMode) : Option(std::move(name), std::move(description)),m_expectType(std::move(expectType)),
-            m_parameterMode(parameterMode), m_defValue(std::move(defVal))
+                ParameterMode parameterMode) : Option(std::move(name), std::move(description)),m_expectType(std::move(expectType)),
+                m_parameterMode(parameterMode), m_defValue(std::move(defVal))
     {
-        bool b = ValidatorManager::instance().testNames(this->m_expectType);
+        auto& vm = ValidatorManager::instance();
+        bool b = vm.testNames(this->m_expectType);
         if (!b)
             throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expectType.c_str()));
+        if (m_parameterMode == ParameterMode::Defaulted) {
+            std::string found;
+            b = vm.validate(m_defValue, m_expectType, found);
+            if (!b)
+                throw std::invalid_argument(fmt("expected type of default argument = '%s' is not type of '%s'",
+                    m_defValue.c_str(), m_expectType.c_str()));
+        }
     }
 
     INLINE std::string Parameter::to_string() const {
