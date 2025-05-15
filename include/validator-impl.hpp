@@ -51,7 +51,7 @@ namespace cli {
         if (n == "string")
             throw std::runtime_error("'string' is reservwed as validator name");
         if (!isNameIdentifier(n))
-            throw std::runtime_error("validator name '"+ n+ "' can be only ascii letters or dash and starts/ends with letter");
+            throw std::runtime_error("validator name '"+ n+ "' can be only ascii letters or dashes and starts/ends with letter");
         if (validators_.find(n) != validators_.end())
             throw std::runtime_error("Validator '" + n + "' already registered");
 
@@ -62,6 +62,10 @@ namespace cli {
         }
         v->init();
         validators_[n] = std::move(v);
+    }
+
+    INLINE void ValidatorManager::unregister_all_validators() {
+        validators_.clear();
     }
 
     INLINE bool ValidatorManager::testName(const std::string &name) {
@@ -115,6 +119,10 @@ namespace cli {
             if (!(isalpha(c) || c == '-')) return false;
         }
         return true;
+    }
+
+    INLINE std::string IdentifierValidator::urlRegexStr() const {
+        return R"([a-z]([a-z-]*[a-z])?)";
     }
 
     INLINE std::string UrlValidator::urlRegexStr() const{

@@ -6,7 +6,7 @@
 using json = nlohmann::json;
 
 // Dummy handler
-void clone_(const cli::Actual*) {}
+static void clone_(const cli::Actual*) {}
 
 std::unique_ptr<cli::Application> makeAppWithFlags() {
     auto app = std::make_unique<cli::Application>("test");
@@ -14,7 +14,7 @@ std::unique_ptr<cli::Application> makeAppWithFlags() {
     app->addCommand("clone")
         .desc("Clone a repository into a new directory")
         .addArg("repository", "url")
-        .addArgs("directory", "path", 0, 1)
+        .addArgs("directory", "auto-path", 0, 1)
         .addFlag("--local", "","")
         .addFlag("--verbose", "-v","")
         .handler(clone_);
@@ -44,7 +44,7 @@ TEST(FlagTest, FlagsFormalDescription) {
             "min-n": 0,
             "max-n": 1,
             "name": "directory",
-            "type": "path"
+            "type": "auto-path"
         }
     })"_json;
 
@@ -55,7 +55,7 @@ TEST(FlagTest, FlagsFormalDescription) {
 TEST(FlagTest, FlagsParsingAndIgnored) {
     auto app = makeAppWithFlags();
 
-    app->parse("test clone url --local -v --other");
+    app->parse("test clone https://github.com/a/b.git --local -v --other");
 
     json expectedActual = R"({
         "command": "clone",
@@ -66,7 +66,7 @@ TEST(FlagTest, FlagsParsingAndIgnored) {
             {
                 "name": "repository",
                 "type": "url",
-                "value": "url"
+                "value": "https://github.com/a/b.git"
             }
         ]
     })"_json;

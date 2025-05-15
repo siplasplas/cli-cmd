@@ -109,7 +109,7 @@ namespace cli
         std::string name;
         std::string type;
         Argument()= default;
-        Argument(std::string name, std::string type): name(std::move(name)), type(std::move(type)) {}
+        Argument(std::string name, std::string type);
     };
 
     struct ArgumentValue
@@ -287,8 +287,10 @@ namespace cli
         void help(Actual*);
         void mainCommandStub(Actual*);
         void initSystemCommands();
+        void registerValidators();
     public:
         std::map<std::string, std::string> shorthandMap;
+        ~Application();
         Application(std::string appName, const std::string& namedParams);
         explicit Application(std::string app_name)
             : Application(std::move(app_name), "") {}

@@ -12,6 +12,7 @@ namespace cli::ErrorCode {
     inline constexpr int RequiredParameterMissing = 8;
     inline constexpr int UnexpectedCommandLineEnd = 9;
     inline constexpr int OptionUsedTwice    = 10;
+    inline constexpr int IsNotExpectedType  = 11;
 
 } // namespace cli::ErrorCode
 
@@ -44,6 +45,8 @@ namespace cli::ErrorMessage {
     inline constexpr const char* OptionUsedTwice =
         "error: option `%s' is used twice";
 
+    inline constexpr const char* IsNotExpectedType =
+        "error: argument '%s' must be type(s) `%s', this is `%s'";
 
 } // namespace cli::ErrorMessage
 

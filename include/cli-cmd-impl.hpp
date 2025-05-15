@@ -11,6 +11,7 @@
 #include "distance.h"
 #include "error_codes.h"
 #include "util.h"
+#include "validator.h"
 
 namespace cli
 {
@@ -338,6 +339,13 @@ namespace cli
         return result;
     }
 
+    INLINE Argument::Argument(std::string name, std::string type): name(std::move(name)), type(std::move(type))
+    {
+        bool b = ValidatorManager::instance().testNames(this->type);
+        if (!b)
+            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->type.c_str()));
+    }
+
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
         clearActual();
@@ -352,9 +360,9 @@ namespace cli
             auto arg = args[argNumber];
             std::vector<int> expectedClasses = {BareIdentifier, Freeform};
             expectedClasses.insert(expectedClasses.end(), {ShortOption, LongOption});
-            auto errStr = tokenError(arg, expectedClasses, app->combineOpts);
-            if (!errStr.empty()) {
-                errorStr = errStr;
+            auto tokenErrorString = tokenError(arg, expectedClasses, app->combineOpts);
+            if (!tokenErrorString.empty()) {
+                errorStr = tokenErrorString;
                 errNumber = ErrorCode::BadTokenForm;
                 return;
             }
@@ -409,16 +417,25 @@ namespace cli
             }
             else
             {
+                Argument formalArgument;
                 if (count < formal.argList.size())
                 {
-                    Argument &formalArgument = formal.argList[count++];
-                    arguments.emplace_back(formalArgument, arg);
+                    formalArgument = formal.argList[count++];
                 } else
                 {
-                    Argument &formalArgument = formal.vaArgs;
-                    arguments.emplace_back(formalArgument, arg);
+                    formalArgument = formal.vaArgs;
                     varCount++;
                 }
+                auto& vm = ValidatorManager::instance();
+                std::string found;
+                bool validated = vm.validate(arg,formalArgument.type,found);
+                if (!validated) {
+                    errorStr = fmt(ErrorMessage::IsNotExpectedType, arg.c_str(),
+                        formalArgument.type.c_str(), formalArgument.name.c_str());
+                    errNumber = ErrorCode::IsNotExpectedType;
+                    return;
+                }
+                arguments.emplace_back(formalArgument, arg);
             }
             argNumber++;
         }
@@ -759,10 +776,29 @@ namespace cli
             helpCmd.addFlag("--all", "", "all commands");
     }
 
+    INLINE void Application::registerValidators() {
+        auto& vm = ValidatorManager::instance();
+        vm.register_validator(std::make_unique<IdentifierValidator>());
+        vm.register_validator(std::make_unique<UrlValidator>());
+        vm.register_validator(std::make_unique<LinuxPathValidator>());
+        vm.register_validator(std::make_unique<WindowsPathValidator>());
+        vm.register_validator(std::make_unique<GeneralPathValidator>());
+        vm.register_validator(std::make_unique<AutoPathValidator>());
+        vm.register_validator(std::make_unique<IntegerValidator>());
+        vm.register_validator(std::make_unique<DecimalValidator>());
+        vm.register_validator(std::make_unique<FloatValidator>());
+        vm.register_validator(std::make_unique<NumberValidator>());
+    }
+
+    inline Application::~Application() {
+        ValidatorManager::instance().unregister_all_validators();
+    }
+
     INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");
+        registerValidators();
         auto args = parseSimpleArgs(namedParams);
         setArg(args, "cmdDepth", cmdDepth, 0, 3);
         setArg(args, "combineOpts", combineOpts, 0, 1);

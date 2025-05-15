@@ -10,7 +10,7 @@ std::unique_ptr<cli::Application> makeAppWithClone() {
     app->addCommand("clone")
         .desc("Clone a repository into a new directory")
         .addArg("repository", "url")
-        .addArgs("directory", "path", 0, 1)
+        .addArgs("directory", "auto-path", 0, 1)
         .handler([](const cli::Actual*) {}); // test stub
 
     return app;
@@ -29,7 +29,7 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
             "min-n": 0,
             "max-n": 1,
             "name": "directory",
-            "type": "path"
+            "type": "auto-path"
         }
     })"_json;
 
@@ -40,7 +40,7 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
 TEST(CliCmdTest, ArgumentsActualParsing) {
     auto app = makeAppWithClone();
 
-    app->parse("mycli clone path");
+    app->parse("mycli clone https://github.com/siplasplas/cli-cmd.git");
 
     json expectedActual = R"({
         "command": "clone",
@@ -50,7 +50,7 @@ TEST(CliCmdTest, ArgumentsActualParsing) {
             {
                 "name": "repository",
                 "type": "url",
-                "value": "path"
+                "value": "https://github.com/siplasplas/cli-cmd.git"
             }
         ]
     })"_json;

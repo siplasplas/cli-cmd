@@ -5,8 +5,6 @@
 #include <vector>
 
 namespace cli {
-    static std::vector<std::string> split_by_space(const std::string &input);
-
     class Validator {
     protected:
         std::regex urlRegex;
@@ -29,12 +27,22 @@ namespace cli {
     public:
         static ValidatorManager& instance();
         void register_validator(std::unique_ptr<Validator> v);
+        void unregister_all_validators();
         bool testName(const std::string &name);
         bool testNames(const std::string &names);
         const Validator& get(const std::string& name) const;
         bool exists(const std::string& name) const;
         bool validate(const std::string& value, const std::string& names, std::string& found) const;
         static bool isNameIdentifier(const std::string& name);
+    };
+
+    class IdentifierValidator : public Validator {
+        [[nodiscard]] std::string urlRegexStr() const override;
+    public:
+        [[nodiscard]] std::string name() const override { return "identifier"; }
+        [[nodiscard]] std::string description() const override {
+            return "only ascii letters or dashes and starts/ends with letter";
+        }
     };
 
     class UrlValidator : public Validator {

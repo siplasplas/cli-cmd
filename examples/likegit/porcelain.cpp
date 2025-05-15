@@ -32,7 +32,7 @@ void addPorcelainCommands(cli::Application &app)
     category->addCommand("citool").desc("Graphical alternative to git-commit");
     category->addCommand("clean").desc("Remove untracked files from the working tree");
     category->addCommand("clone").desc("Clone a repository into a new directory")
-        .addArg("repository","path");
+        .addArg("repository","auto-path");
     category->addCommand("commit").desc("Record changes to the repository");
     category->addCommand("describe").desc("Give an object a human readable name based on an available ref");
     category->addCommand("diff").desc("Show changes between commits, commit and working tree, etc");
