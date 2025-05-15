@@ -232,7 +232,7 @@ namespace cli
         *     from subcategories which keep only common subcommands, and
         *     help --all shows all
         */
-        int cmdDepth = 1;
+        int cmdDepth;
         /**
          * @var combineOpts
          * @brief Allows combining multiple single-letter options after one hyphen
@@ -256,7 +256,7 @@ namespace cli
          * - ❌ `-j4` (use `-j 4`)
          * - ✅ `-abc -j 4`
          */
-        int combineOpts = 1;
+        int combineOpts;
         /**
          * @var helpAtStart
          * @brief Controls automatic help display when no commands/options are provided
@@ -280,11 +280,8 @@ namespace cli
          * note helpAtStart=0
          * ```
          */
-        int helpAtStart = 0;
+        int helpAtStart;
     private:
-        static std::unordered_map<std::string, std::string> parseSimpleArgs(const std::string& input);
-        static void setArg(std::unordered_map<std::string, std::string> &args,
-                           const std::string& name, int& arg, int min, int max);
         void printCommands(const Actual* actual) const;
         void commandHelp(Actual* actual);
         [[nodiscard]] std::vector<std::string>  proposeSimilar(const std::string &arg) const;
@@ -296,9 +293,7 @@ namespace cli
     public:
         std::map<std::string, std::string> shorthandMap;
         ~Application();
-        Application(std::string appName, const std::string& namedParams);
-        explicit Application(std::string app_name)
-            : Application(std::move(app_name), "") {}
+        Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAtStart_);
         std::string appName;
         std::shared_ptr<Command> mainCommand;
         std::shared_ptr<Command> currentCommand;

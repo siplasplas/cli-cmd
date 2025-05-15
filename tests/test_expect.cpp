@@ -5,7 +5,7 @@
 static void dummy_handler(const cli::Actual*) {}
 
 TEST(RegisteredTypeTest, BadTypename) {
-    cli::Application app("test");
+    cli::Application app("test", 1, 1, 0);
         EXPECT_THROW({
             app.addCommand("clone")
                 .desc("Clone a repository into a new directory")
@@ -16,7 +16,7 @@ TEST(RegisteredTypeTest, BadTypename) {
 }
 
 TEST(TypeTest, ArgType) {
-    cli::Application app("test");
+    cli::Application app("test", 1, 1, 0);
     app.addCommand("clone").desc("Clone a repository into a new directory")
             .addArg("repository", "url").addArgs("directory", "auto-path", 0, 1)
             .handler(dummy_handler);
@@ -30,7 +30,7 @@ TEST(TypeTest, ArgType) {
 }
 
 TEST(TypeTest, ArgsType) {
-    cli::Application app("test");
+    cli::Application app("test", 1, 1, 0);
     app.addCommand("clone").desc("Clone a repository into a new directory")
             .addArg("repository", "url").addArgs("directory", "windows-path", 0, 1)
             .handler(dummy_handler);
@@ -48,7 +48,7 @@ TEST(TypeTest, ArgsType) {
 }
 
 TEST(TypeTest, ParameterType) {
-    cli::Application app("test");
+    cli::Application app("test", 1, 1, 0);
     app.addCommand("build")
         .addParameter("--output", "-o", "windows-path", "Output file path")
         .handler(dummy_handler);

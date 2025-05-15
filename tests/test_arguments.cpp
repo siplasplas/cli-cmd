@@ -5,7 +5,7 @@
 using json = nlohmann::json;
 
 std::unique_ptr<cli::Application> makeAppWithClone() {
-    auto app = std::make_unique<cli::Application>("test");
+    auto app = std::make_unique<cli::Application>("test", 1, 1, 0);
 
     app->addCommand("clone")
         .desc("Clone a repository into a new directory")

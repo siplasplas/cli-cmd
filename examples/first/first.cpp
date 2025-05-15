@@ -8,7 +8,7 @@ void clone_(const cli::Actual* actual)
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("first");
+    cli::Application app("first", 1, 1, 0);
     app.addCommand("clone").desc("Clone a repository into a new directory")
             .addArg("repository", "url").addArgs("directory", "auto-path", 0, 1)
             .handler(clone_);

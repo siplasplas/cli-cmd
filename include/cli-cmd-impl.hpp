@@ -533,48 +533,6 @@ namespace cli
         return description;
     }
 
-    INLINE std::unordered_map<std::string, std::string> Application::parseSimpleArgs(const std::string& input) {
-        std::unordered_map<std::string, std::string> args;
-        std::istringstream iss(input);
-        std::string token;
-
-        while (iss >> token) {
-            size_t eq_pos = token.find('=');
-            if (eq_pos != std::string::npos) {
-                std::string key = token.substr(0, eq_pos);
-                std::string value = token.substr(eq_pos + 1);
-                args[key] = value;
-            } else {
-                args[token] = ""; // Flag without value
-            }
-        }
-        for (const auto& arg: args)
-            if (arg.second.empty())
-                throw std::invalid_argument("parseSimpleArgs: "+ arg.first +
-                    " is not a valid option for input: [" + input + "]");
-            else
-            {
-                std::size_t pos;
-                try
-                {
-                    std::stoi(arg.second, &pos);
-                } catch (const std::invalid_argument&)
-                {
-                    throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
-                    "=" + arg.second + " is not number for input [" + input + "]");
-                }
-                if (pos != arg.second.size())
-                    throw std::invalid_argument("parseSimpleArgs: for "+ arg.first +
-                    "=" + arg.second + " is not number for input [" + input + "]");
-                if (arg.first != "cmdDepth" && arg.first != "combineOpts"
-                    && arg.first != "helpAtStart" && arg.first != "diagnostic" )
-                    throw std::invalid_argument("parseSimpleArgs: unknown "+ arg.first +
-                    " for input [" + input + "]");
-            }
-
-        return args;
-    }
-
     INLINE Category* Application::addCategory(const std::string& caption)
     {
         auto category = std::make_unique<Category>(caption, this);
@@ -767,18 +725,6 @@ namespace cli
             help(actual);
     }
 
-    INLINE void Application::setArg(std::unordered_map<std::string, std::string> &args,
-        const std::string& name, int &arg, int min, int max)
-    {
-        std::string value = args[name];
-        if (value.empty())
-            return;
-        arg =stoi(value);
-        if (arg < min || arg > max)
-            throw std::invalid_argument(fmt("%s is %d and must be between %d and %d",
-                name.c_str(), arg, min, max));
-    }
-
     INLINE void Application::initSystemCommands()
     {
         if (cmdDepth == 0)
@@ -821,15 +767,12 @@ namespace cli
         ValidatorManager::instance().unregister_all_validators();
     }
 
-    INLINE Application::Application(std::string appName, const std::string& namedParams): appName(std::move(appName))
+    INLINE Application::Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAtStart_):
+            cmdDepth(cmdDepth_), combineOpts(combineOpts_), helpAtStart(helpAtStart_), appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");
         registerValidators();
-        auto args = parseSimpleArgs(namedParams);
-        setArg(args, "cmdDepth", cmdDepth, 0, 3);
-        setArg(args, "combineOpts", combineOpts, 0, 1);
-        setArg(args, "helpAtStart", helpAtStart, 0, 1);
         initSystemCommands();
     }
 

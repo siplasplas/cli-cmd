@@ -6,7 +6,7 @@ using namespace cli;
 static void dummy_handler(const Actual*) {}
 
 TEST(ParameterTest, OptionalParameterWithValue) {
-    Application app("test");
+    Application app("test", 1, 1, 0);
     app.addCommand("build")
         .addParameter("--output", "-o", "linux-path", "Output file path")
         .handler(dummy_handler);
@@ -35,7 +35,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
 }
 
 TEST(ParameterTest, RequiredParameterMissing) {
-    Application app("test");
+    Application app("test", 1, 1, 0);
     app.addCommand("build")
         .addReqParameter("--config", "-c", "linux-path", "Configuration file")
         .handler(dummy_handler);
@@ -46,7 +46,7 @@ TEST(ParameterTest, RequiredParameterMissing) {
 }
 
 TEST(ParameterTest, DefaultParameterUsed) {
-    Application app("test");
+    Application app("test", 1, 1, 0);
     app.addCommand("build")
         .addDefParameter("--log", "-l", "default.log", "linux-path", "Log output file")
         .handler(dummy_handler);
