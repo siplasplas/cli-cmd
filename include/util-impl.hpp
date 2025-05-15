@@ -189,6 +189,7 @@ namespace cli
             case ErrorCode::UnknownLongOption: return "UnknownLongOption";
             case ErrorCode::RequiredParameterMissing: return "RequiredParameterMissing";
             case ErrorCode::UnexpectedCommandLineEnd: return "UnexpectedCommandLineEnd";
+            case ErrorCode::OptionUsedTwice: return "OptionUsedTwice";
             default: return "<unknown>";
         }
     }

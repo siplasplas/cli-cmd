@@ -48,11 +48,11 @@ TEST(ParameterTest, RequiredParameterMissing) {
 TEST(ParameterTest, DefaultParameterUsed) {
     Application app("test");
     app.addCommand("build")
-        .addDefParameter("--log", "-l", "path", "default.log", "Log output file")
+        .addDefParameter("--log", "-l", "default.log", "path", "Log output file")
         .handler(dummy_handler);
 
     app.parse("test build");
 
     auto j = app.currentCommand->asJson();
-    ASSERT_EQ( "default.log", j["parameters"]["--log"]);
+    ASSERT_EQ( "default.log", j["parameter_map"]["--log"]);
 }

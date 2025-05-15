@@ -10,7 +10,8 @@ namespace cli::ErrorCode {
     inline constexpr int UnknownShortOption  = 6;
     inline constexpr int UnknownLongOption   = 7;
     inline constexpr int RequiredParameterMissing = 8;
-    inline constexpr int UnexpectedCommandLineEnd       = 9;
+    inline constexpr int UnexpectedCommandLineEnd = 9;
+    inline constexpr int OptionUsedTwice    = 10;
 
 } // namespace cli::ErrorCode
 
@@ -39,6 +40,10 @@ namespace cli::ErrorMessage {
 
     inline constexpr const char* UnexpectedCommandLineEnd =
         "error: unexpected end o command line parameter `%s'";
+
+    inline constexpr const char* OptionUsedTwice =
+        "error: option `%s' is used twice";
+
 
 } // namespace cli::ErrorMessage
 

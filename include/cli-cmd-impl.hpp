@@ -342,6 +342,10 @@ namespace cli
     {
         clearActual();
         size_t count = 0, varCount = 0;
+        std::map<std::string, int> optCount;
+        for (const auto& [key, _] : formal.optionMap) {
+            optCount[key] = 0;
+        }
         size_t argNumber = start;
         while (argNumber < args.size())
         {
@@ -382,6 +386,12 @@ namespace cli
                     errNumber = ErrorCode::UnknownLongOption;
                     return;
                 }
+                optCount[it->first]++;
+                if (optCount[optStr] > 1) {
+                    errorStr = fmt(ErrorMessage::OptionUsedTwice, optStr.c_str());
+                    errNumber = ErrorCode::OptionUsedTwice;
+                    return;
+                }
                 auto opt = it->second.get();
                 if (opt->kind() == OptionKind::Flag)
                     flagSet.insert(optStr);
@@ -411,6 +421,21 @@ namespace cli
                 }
             }
             argNumber++;
+        }
+        for (const auto& pair : optCount) {
+            if (pair.second == 0) {
+                auto option = formal.optionMap[pair.first].get();
+                if (option->kind() != OptionKind::Parameter)
+                    continue;
+                auto parameter = dynamic_cast<Parameter*>(option);
+                if (parameter->parameterMode() == ParameterMode::Required) {
+                    errorStr = fmt(ErrorMessage::RequiredParameterMissing, parameter->name().c_str());
+                    errNumber = ErrorCode::RequiredParameterMissing;
+                    return;
+                } else if (parameter->parameterMode() == ParameterMode::Defaulted) {
+                    parameterMap[parameter->name()] = parameter->defValue();
+                }
+            }
         }
         if (arguments.size() < formal.argList.size() + formal.vaArgs.min_n)
         {
