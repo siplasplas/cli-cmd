@@ -21,6 +21,7 @@ elif clicmd_mode == 1
     'src/cli-cmd.cpp',
     'src/distance.cpp',
     'src/util.cpp',
+    'src/validator.cpp',
   )
   lib_dep = declare_dependency(sources : clicmd_sources, include_directories : inc)
 
