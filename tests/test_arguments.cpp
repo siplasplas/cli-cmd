@@ -24,6 +24,7 @@ TEST(CliCmdTest, ArgumentsFormalDescription) {
             { "name": "repository", "type": "url" }
         ],
         "flags": [],
+        "parameters": [],
         "varargs": {
             "min-n": 0,
             "max-n": 1,
@@ -43,8 +44,8 @@ TEST(CliCmdTest, ArgumentsActualParsing) {
 
     json expectedActual = R"({
         "command": "clone",
-        "error_number": 0,
         "flag_set": [],
+        "parameter_map": {},
         "arguments": [
             {
                 "name": "repository",

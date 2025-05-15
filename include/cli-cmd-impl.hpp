@@ -70,6 +70,8 @@ namespace cli
         j = json{
                     {"name", p.name()},
                     {"parameterMode", to_string_parametermode(p.parameterMode())},
+                    {"expect", p.expect()},
+                    {"defValue", p.defValue()},
                 };
         if (!p.description().empty())
             j["desc"] = p.description();
@@ -77,10 +79,12 @@ namespace cli
 
     INLINE void to_json(json& j, const Actual& a) {
         j = json{
-                {"command", a.m_name},
-                {"flag_set", std::vector<std::string>(a.flagSet.begin(), a.flagSet.end())},
-                {"error_number", a.errNumber},
+            {"command", a.m_name},
+            {"flag_set", a.flagSet},
+            {"parameter_map", a.parameterMap},
             };
+        if (a.errNumber)
+            j["error"] = to_string_errorCode(a.errNumber);
         j["arguments"] = a.arguments;
     }
 
@@ -104,6 +108,7 @@ namespace cli
 
         j = json{
             {"flags", flags},
+            {"parameters", parameters},
             {"arguments", f.argList}, // requires to_json(json&, const Argument&)
         };
 
@@ -120,6 +125,14 @@ namespace cli
     INLINE bool Actual::containsFlag(const std::string& opt) const
     {
         return flagSet.find(opt) != flagSet.end();
+    }
+
+    INLINE void Actual::clearActual() {
+        arguments.clear();
+        flagSet.clear();
+        errNumber = 0;
+        errorStr = "";
+        mostSimilar.clear();
     }
 
     INLINE void Formal::checkNames(Application *app, const std::string &name, const std::string &shorthand) {
@@ -327,15 +340,14 @@ namespace cli
 
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
-        arguments.clear();
+        clearActual();
         size_t count = 0, varCount = 0;
-        //bool afterParameter = false;
-        for (size_t i = start; i < args.size(); i++)
+        size_t argNumber = start;
+        while (argNumber < args.size())
         {
-            auto arg = args[i];
+            auto arg = args[argNumber];
             std::vector<int> expectedClasses = {BareIdentifier, Freeform};
-            //if (!afterParameter) //will be useful later
-                expectedClasses.insert(expectedClasses.end(), {ShortOption, LongOption});
+            expectedClasses.insert(expectedClasses.end(), {ShortOption, LongOption});
             auto errStr = tokenError(arg, expectedClasses, app->combineOpts);
             if (!errStr.empty()) {
                 errorStr = errStr;
@@ -343,30 +355,46 @@ namespace cli
                 return;
             }
             auto tokenClass = classifyToken(arg, app->combineOpts);
-            std::string flag;
+            std::string optStr;
             switch (tokenClass) {
-                case LongOption:;
-                    flag = arg;
+                case LongOption: case LongEquals:
+                    optStr = arg;
                     break;
-                case ShortOption:;
+                case ShortOption: case ShortEquals: {
                     auto it = app->shorthandMap.find(arg);
                     if (it != app->shorthandMap.end()) {
-                        flag = it->second;
+                        optStr = it->second;
                     } else
                     {
-                        errorStr = fmt(ErrorMessage::UnknownOption, arg.c_str());
-                        errNumber = ErrorCode::UnknownOption;
+                        errorStr = fmt(ErrorMessage::UnknownShortOption, arg.c_str());
+                        errNumber = ErrorCode::UnknownShortOption;
                         return;
                     }
                     break;
+                }
+                default:; //positional
             }
-            if (!flag.empty()) {
-                if (formal.optionMap.find(flag)  != formal.optionMap.end())
-                    flagSet.insert(flag);
-                else {
-                    errorStr = fmt(ErrorMessage::UnknownOption, flag.c_str());
-                    errNumber = ErrorCode::UnknownOption;
+            if (!optStr.empty()) {
+                auto it = formal.optionMap.find(optStr);
+                if (it  == formal.optionMap.end())
+                {
+                    errorStr = fmt(ErrorMessage::UnknownLongOption, optStr.c_str());
+                    errNumber = ErrorCode::UnknownLongOption;
                     return;
+                }
+                auto opt = it->second.get();
+                if (opt->kind() == OptionKind::Flag)
+                    flagSet.insert(optStr);
+                else if (opt->kind() == OptionKind::Parameter) {
+                    auto parameter = dynamic_cast<Parameter*>(opt);
+                    argNumber++;
+                    if (argNumber >= args.size()) {
+                        errorStr = fmt(ErrorMessage::UnexpectedCommandLineEnd, parameter->name().c_str());
+                        errNumber = ErrorCode::UnexpectedCommandLineEnd;
+                        return;
+                    }
+                    arg = args[argNumber];
+                    parameterMap[parameter->name()] = arg;
                 }
             }
             else
@@ -382,6 +410,7 @@ namespace cli
                     varCount++;
                 }
             }
+            argNumber++;
         }
         if (arguments.size() < formal.argList.size() + formal.vaArgs.min_n)
         {

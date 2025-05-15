@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include "util.h"
 #include "iostream"
+#include "error_codes.h"
 
 namespace cli
 {
@@ -174,6 +175,22 @@ namespace cli
             list += to_string_argtype(expectedTypes[i]);
         }
         return "Token " + token + " expected one of: [" + list + "], but got " + to_string_argtype(type);
+    }
+
+    INLINE const char* to_string_errorCode(int code) {
+        using namespace cli;
+        switch (code) {
+            case ErrorCode::MissingHandler: return "MissingHandler";
+            case ErrorCode::TooFewArguments: return "TooFewArguments";
+            case ErrorCode::TooManyArguments: return "TooManyArguments";
+            case ErrorCode::UnknownCommand: return "UnknownCommand";
+            case ErrorCode::BadTokenForm: return "BadTokenForm";
+            case ErrorCode::UnknownShortOption: return "UnknownShortOption";
+            case ErrorCode::UnknownLongOption: return "UnknownLongOption";
+            case ErrorCode::RequiredParameterMissing: return "RequiredParameterMissing";
+            case ErrorCode::UnexpectedCommandLineEnd: return "UnexpectedCommandLineEnd";
+            default: return "<unknown>";
+        }
     }
 
 }

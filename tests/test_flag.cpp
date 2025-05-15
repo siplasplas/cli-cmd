@@ -39,6 +39,7 @@ TEST(FlagTest, FlagsFormalDescription) {
                 "name": "--verbose"
             }
         ],
+        "parameters": [],
         "varargs": {
             "min-n": 0,
             "max-n": 1,
@@ -58,8 +59,9 @@ TEST(FlagTest, FlagsParsingAndIgnored) {
 
     json expectedActual = R"({
         "command": "clone",
-        "error_number": 6,
+        "error": "UnknownLongOption",
         "flag_set": ["--local", "--verbose"],
+        "parameter_map": {},
         "arguments": [
             {
                 "name": "repository",

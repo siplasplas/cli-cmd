@@ -11,10 +11,27 @@ TEST(ParameterTest, OptionalParameterWithValue) {
         .addParameter("--output", "-o", "path", "Output file path")
         .handler(dummy_handler);
 
-    app.parse("test build -o out.txt");
-
+    json expectedFormal = R"({
+	"arguments": [],
+	"flags": [],
+	"parameters": [
+		{
+			"defValue": "",
+			"desc": "Output file path",
+			"expect": "path",
+			"name": "--output",
+			"parameterMode": "Optional"
+		}
+	]
+})"_json;
+    auto command = app.getCommand("build");
+    json formal = command->formalAsJson();
+    EXPECT_EQ(expectedFormal, formal);
+    app.parse("test build --output /path/to/file");
     auto j = app.currentCommand->asJson();
-    ASSERT_EQ("out.txt", j["parameters"]["--output"]);
+    nlohmann::json paramMap = j["parameter_map"];
+    json expectedParamMap = R"({"--output": "/path/to/file"})"_json;
+    EXPECT_EQ(expectedParamMap, paramMap);
 }
 
 TEST(ParameterTest, RequiredParameterMissing) {

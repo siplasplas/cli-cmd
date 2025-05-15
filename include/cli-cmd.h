@@ -78,16 +78,16 @@ namespace cli
     {
         std::string m_expect;
         ParameterMode m_parameterMode;
-        std::string m_default;
+        std::string m_defValue;
     public:
         Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
             ParameterMode parameterMode)
                 : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
-                m_parameterMode(parameterMode), m_default(std::move(defVal)){}
+                m_parameterMode(parameterMode), m_defValue(std::move(defVal)){}
 
         Parameter(const Parameter& base, ParameterMode overrideMode, std::string defVal = "")
                : Option(base.name(), base.description()),
-                m_expect(base.m_expect),m_parameterMode(overrideMode), m_default(std::move(defVal)) {}
+                m_expect(base.m_expect),m_parameterMode(overrideMode), m_defValue(std::move(defVal)) {}
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] OptionKind kind() const override {
@@ -95,6 +95,12 @@ namespace cli
         };
         [[nodiscard]] ParameterMode parameterMode() const{
             return m_parameterMode;
+        }
+        [[nodiscard]] std::string expect() const {
+            return m_expect;
+        }
+        [[nodiscard]] std::string defValue() const {
+            return m_defValue;
         }
     };
 
@@ -126,15 +132,17 @@ namespace cli
     struct Actual
     {
         virtual ~Actual() = default;
-        static std::optional<std::string> getParamValue(const std::string &key);
         std::string m_name;
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
-        [[nodiscard]] bool containsFlag(const std::string &opt) const;
+        std::map<std::string, std::string> parameterMap;
         int errNumber = 0;
         std::optional<std::string> errorStr;
         std::vector<std::string> mostSimilar;
+        static std::optional<std::string> getParamValue(const std::string &key);
+        [[nodiscard]] bool containsFlag(const std::string &opt) const;
         explicit Actual(std::string commandName): m_name(std::move(commandName)){}
+        void clearActual();
     };
 
     struct Formal
