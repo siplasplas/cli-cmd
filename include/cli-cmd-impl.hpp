@@ -332,6 +332,15 @@ namespace cli
         return result;
     }
 
+    inline Parameter::Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
+    ParameterMode parameterMode) : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
+            m_parameterMode(parameterMode), m_defValue(std::move(defVal))
+    {
+        bool b = ValidatorManager::instance().testNames(this->m_expect);
+        if (!b)
+            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expect.c_str()));
+    }
+
     INLINE std::string Parameter::to_string() const {
         std::string indent(3, ' ');
         std::string result =  indent + name() + std::string(std::max(1, 10 - static_cast<int>(name().size())), ' ')

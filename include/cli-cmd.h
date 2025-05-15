@@ -81,9 +81,7 @@ namespace cli
         std::string m_defValue;
     public:
         Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
-            ParameterMode parameterMode)
-                : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
-                m_parameterMode(parameterMode), m_defValue(std::move(defVal)){}
+            ParameterMode parameterMode);
 
         Parameter(const Parameter& base, ParameterMode overrideMode, std::string defVal = "")
                : Option(base.name(), base.description()),
