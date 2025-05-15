@@ -420,8 +420,17 @@ namespace cli
                         errNumber = ErrorCode::UnexpectedCommandLineEnd;
                         return;
                     }
-                    arg = args[argNumber];
-                    parameterMap[parameter->name()] = arg;
+                    const auto& arg1 = args[argNumber];
+                    auto& vm = ValidatorManager::instance();
+                    std::string found;
+                    bool validated = vm.validate(arg1,parameter->expectType(),found);
+                    if (!validated) {
+                        errorStr = fmt(ErrorMessage::IsNotExpectedTypeParam, arg1.c_str(),
+                            parameter->expectType().c_str(), arg.c_str());
+                        errNumber = ErrorCode::IsNotExpectedTypeParam;
+                        return;
+                    }
+                    parameterMap[parameter->name()] = arg1;
                 }
             }
             else
@@ -437,11 +446,12 @@ namespace cli
                 }
                 auto& vm = ValidatorManager::instance();
                 std::string found;
-                bool validated = vm.validate(arg,formalArgument.expectType(),found);
+                auto expectType = formalArgument.expectType();
+                bool validated = vm.validate(arg, expectType,found);
                 if (!validated) {
-                    errorStr = fmt(ErrorMessage::IsNotExpectedType, arg.c_str(),
+                    errorStr = fmt(ErrorMessage::IsNotExpectedTypeArg, arg.c_str(),
                         formalArgument.expectType().c_str(), formalArgument.name().c_str());
-                    errNumber = ErrorCode::IsNotExpectedType;
+                    errNumber = ErrorCode::IsNotExpectedTypeArg;
                     return;
                 }
                 arguments.emplace_back(formalArgument, arg);
