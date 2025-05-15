@@ -15,6 +15,7 @@
     - Command-local and app-global parameter shadowing
 - [ ] Support `--param=value` and `--param value`
 - [ ] Consistent behavior for required vs optional vs defaulted parameters
+- [ ] Support override global options
 
 ## Validation System
 
