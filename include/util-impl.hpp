@@ -59,14 +59,6 @@ namespace cli
         }
     }
 
-    INLINE bool isAsciiAlpha(char ch) {
-        return std::isalpha(static_cast<unsigned char>(ch));
-    }
-
-    INLINE bool isAsciiAlnum(char ch) {
-        return std::isalnum(static_cast<unsigned char>(ch));
-    }
-
     INLINE int classifyToken(const std::string& s, bool combineOpts)
     {
         if (s.empty()) return ArgError::InvalidEmpty;
@@ -74,9 +66,9 @@ namespace cli
 
         if (s[0] != '-') {
             // BareIdentifier or Freeform
-            if (!isAsciiAlpha(s[0]) || s.back() == '-') return ArgType::Freeform;
+            if (!isalpha(s[0]) || s.back() == '-') return ArgType::Freeform;
             for (char c : s) {
-                if (!(isAsciiAlpha(c) || c == '-')) return ArgType::Freeform;
+                if (!(isalpha(c) || c == '-')) return ArgType::Freeform;
             }
             return ArgType::BareIdentifier;
         }
@@ -89,7 +81,7 @@ namespace cli
             if (key.size() < 2 || key.front() == '-' || key.back() == '-')
                 return ArgError::InvalidLongOptionSyntax;
             for (char c : key) {
-                if (!(isAsciiAlnum(c) || c == '-'))
+                if (!(isalnum(c) || c == '-'))
                     return ArgError::InvalidLongOptionSyntax;
             }
             return (eq != std::string::npos) ? ArgType::LongEquals : ArgType::LongOption;
@@ -103,14 +95,14 @@ namespace cli
                 // GCC style: whole string after '-' interpreted as one option
                 // can have '-' inside
                 for (char c : group) {
-                    if (!isAsciiAlnum(c) && c != '-') return ArgError::InvalidGccOptionSyntax;
+                    if (!isalnum(c) && c != '-') return ArgError::InvalidGccOptionSyntax;
                 }
                 return (eq != std::string::npos) ? ArgType::GccEquals : ArgType::GccOption;
             }
 
             // Git-style compact flags (only letters/digits, without '-')
             for (char c : group) {
-                if (!isAsciiAlnum(c)) return ArgError::InvalidCompactSyntax;
+                if (!isalnum(c)) return ArgError::InvalidCompactSyntax;
             }
             if (group.size() == 1)
                 return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;

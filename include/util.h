@@ -20,7 +20,7 @@ namespace cli
     [[nodiscard]] std::string fmt(const char* format_str, ...);
 
     enum ArgType {
-        BareIdentifier = 1,          // e.q. clone
+        BareIdentifier  = 1,         // e.q. clone
         ShortOption     = 2,         // e.q. -o
         LongOption      = 3,         // e.q. --output
         CompactFlags    = 4,         // e.q. -abc
