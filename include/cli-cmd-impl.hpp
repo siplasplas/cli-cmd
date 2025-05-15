@@ -767,8 +767,8 @@ namespace cli
         ValidatorManager::instance().unregister_all_validators();
     }
 
-    INLINE Application::Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAtStart_):
-            cmdDepth(cmdDepth_), combineOpts(combineOpts_), helpAtStart(helpAtStart_), appName(std::move(appName))
+    INLINE Application::Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAvailability_):
+            cmdDepth(cmdDepth_), combineOpts(combineOpts_), helpAvailability(helpAvailability_), appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");

@@ -5,7 +5,7 @@
 using json = nlohmann::json;
 
 std::unique_ptr<cli::Application> makeAppWithHelpAndClone() {
-    auto app = std::make_unique<cli::Application>("test", 1, 1, 0);
+    auto app = std::make_unique<cli::Application>("test", 1, 1, 1);
     app->addCommand("clone");
     return app;
 }
@@ -33,7 +33,7 @@ TEST(CliCmdTest, SuggestSimilarCommandBasic) {
 }
 
 std::unique_ptr<cli::Application> makeAppWithCloneAndClean() {
-    auto app = std::make_unique<cli::Application>("test", 1, 1, 0);
+    auto app = std::make_unique<cli::Application>("test", 1, 1, 1);
     app->addCommand("clone").
     app->addCommand("clean");
     return app;

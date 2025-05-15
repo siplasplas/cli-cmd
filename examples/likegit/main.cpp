@@ -24,7 +24,7 @@ void clone_(const cli::Actual* actual)
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("likegit",3, 1, 0);
+    cli::Application app("likegit",3, 1, 2);
     addPorcelainCommands(app);
     addManipulators(app);
     addInterrogators(app);

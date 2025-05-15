@@ -258,29 +258,19 @@ namespace cli
          */
         int combineOpts;
         /**
-         * @var helpAtStart
-         * @brief Controls automatic help display when no commands/options are provided
+         * @brief Controls help availability in the CLI application.
          *
-         * Possible values:
-         * - 0 (default): No automatic help - requires explicit `--help` flag
-         * - 1: Shows help immediately if no valid commands/options are given
+         * The `helpAvailability` variable determines in which situations the CLI help system (`--help` flag or `help` command)
+         * is enabled or shown to the user.
          *
-         * @note When enabled (1), these scenarios trigger help:
-         * - Empty invocation: `myapp` → shows help
-         * - Unknown command: `myapp invalid-cmd` → shows help
+         * Values:
+         * - 0 – help is available only via the `--help` flag
+         * - 1 – in addition to `--help`, a dedicated `help` command is available
+         * - 2 – help is also shown automatically when the program is run without any commands or options
          *
-         * @example : enable automatic help
-         * ```cpp
-         * MyApp():cli::Application("myapp", "helpAtStart=1"){}
-         * ```
-         *
-         * @example : default behavior
-         * ```cpp
-         * MyApp():cli::Application("myapp){}
-         * note helpAtStart=0
-         * ```
+         * The default value is typically 1.
          */
-        int helpAtStart;
+       int helpAvailability;
     private:
         void printCommands(const Actual* actual) const;
         void commandHelp(Actual* actual);
@@ -293,7 +283,7 @@ namespace cli
     public:
         std::map<std::string, std::string> shorthandMap;
         ~Application();
-        Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAtStart_);
+        Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAvailability_);
         std::string appName;
         std::shared_ptr<Command> mainCommand;
         std::shared_ptr<Command> currentCommand;

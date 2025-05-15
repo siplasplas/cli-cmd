@@ -17,7 +17,7 @@ void mainHandler(const cli::Actual*)
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("likegcc", 0,0,0);
+    cli::Application app("likegcc", 0,0, 0);
     auto mainCommand = app.mainCommand.get();
     mainCommand->handler(mainHandler);
     addOptions(mainCommand);
