@@ -27,7 +27,7 @@ TEST(FlagTest, FlagsFormalDescription) {
 
     json expectedFormal = R"({
         "arguments": [
-            { "name": "repository", "type": "url" }
+            { "name": "repository", "expectType": "url" }
         ],
         "flags": [
             {
@@ -44,7 +44,7 @@ TEST(FlagTest, FlagsFormalDescription) {
             "min-n": 0,
             "max-n": 1,
             "name": "directory",
-            "type": "auto-path"
+            "expectType": "auto-path"
         }
     })"_json;
 
@@ -65,7 +65,7 @@ TEST(FlagTest, FlagsParsingAndIgnored) {
         "arguments": [
             {
                 "name": "repository",
-                "type": "url",
+                "expectType": "url",
                 "value": "https://github.com/a/b.git"
             }
         ]

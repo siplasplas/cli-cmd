@@ -17,23 +17,23 @@ namespace cli
 {
     INLINE void to_json(json& j, const ArgumentValue& v) {
         j = json{
-                {"name", v.argument.name},
-                {"type", v.argument.type},
+                {"name", v.argument.name()},
+                {"expectType", v.argument.expectType()},
                 {"value", v.value}
         };
     }
 
     INLINE void to_json(json& j, const Argument& v) {
         j = json{
-                        {"name", v.name},
-                        {"type", v.type},
+                        {"name", v.name()},
+                        {"expectType", v.expectType()},
             };
     }
 
     INLINE void to_json(json& j, const VaArguments& v) {
         j = json{
-                    {"name", v.name},
-                    {"type", v.type},
+                    {"name", v.name()},
+                    {"expectType", v.expectType()},
                     {"min-n", v.min_n},
                     {"max-n", v.max_n},
         };
@@ -71,7 +71,7 @@ namespace cli
         j = json{
                     {"name", p.name()},
                     {"parameterMode", to_string_parametermode(p.parameterMode())},
-                    {"expect", p.expect()},
+                    {"expectType", p.expectType()},
                     {"defValue", p.defValue()},
                 };
         if (!p.description().empty())
@@ -265,7 +265,7 @@ namespace cli
             std::cout << *errorStr << std::endl;
         if (errNumber == ErrorCode::MissingHandler)
             for (const auto& arg : arguments)
-                std::cout << arg.value << " = [" << arg.argument.name << ":" << arg.argument.type << "]\n";
+                std::cout << arg.value << " = [" << arg.argument.name() << ":" << arg.argument.expectType() << "]\n";
         else if (errNumber == ErrorCode::UnknownCommand) {
             auto cmdHelp = app->getCommand("help");
             printSimilars();
@@ -287,13 +287,13 @@ namespace cli
             formal.argList.size())));
         for (const auto& arg: formal.argList)
         {
-            positional->add(Node(arg.name + " : " + arg.type));
+            positional->add(Node(arg.name() + " : " + arg.expectType()));
         }
         if (formal.vaArgs.max_n > 0)
         {
             positional = root.add(Node(fmt("VarPositional args: (min: %d, max: %d)",
                         formal.vaArgs.min_n, formal.vaArgs.max_n)));
-            positional->add(Node(formal.vaArgs.name + " : " + formal.vaArgs.type));
+            positional->add(Node(formal.vaArgs.name() + " : " + formal.vaArgs.expectType()));
         }
         Node* flags = root.add(Node("Flags"));
         for (const auto& arg: flagSet)
@@ -332,13 +332,13 @@ namespace cli
         return result;
     }
 
-    inline Parameter::Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
-    ParameterMode parameterMode) : Option(std::move(name), std::move(description)),m_expect(std::move(expectType)),
+    INLINE Parameter::Parameter(std::string name, std::string description, std::string defVal, std::string expectType,
+    ParameterMode parameterMode) : Option(std::move(name), std::move(description)),m_expectType(std::move(expectType)),
             m_parameterMode(parameterMode), m_defValue(std::move(defVal))
     {
-        bool b = ValidatorManager::instance().testNames(this->m_expect);
+        bool b = ValidatorManager::instance().testNames(this->m_expectType);
         if (!b)
-            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expect.c_str()));
+            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expectType.c_str()));
     }
 
     INLINE std::string Parameter::to_string() const {
@@ -348,11 +348,11 @@ namespace cli
         return result;
     }
 
-    INLINE Argument::Argument(std::string name, std::string type): name(std::move(name)), type(std::move(type))
+    INLINE Argument::Argument(std::string name, std::string expectType): m_name(std::move(name)), m_expectType(std::move(expectType))
     {
-        bool b = ValidatorManager::instance().testNames(this->type);
+        bool b = ValidatorManager::instance().testNames(this->m_expectType);
         if (!b)
-            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->type.c_str()));
+            throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expectType.c_str()));
     }
 
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
@@ -437,10 +437,10 @@ namespace cli
                 }
                 auto& vm = ValidatorManager::instance();
                 std::string found;
-                bool validated = vm.validate(arg,formalArgument.type,found);
+                bool validated = vm.validate(arg,formalArgument.expectType(),found);
                 if (!validated) {
                     errorStr = fmt(ErrorMessage::IsNotExpectedType, arg.c_str(),
-                        formalArgument.type.c_str(), formalArgument.name.c_str());
+                        formalArgument.expectType().c_str(), formalArgument.name().c_str());
                     errNumber = ErrorCode::IsNotExpectedType;
                     return;
                 }
@@ -799,7 +799,7 @@ namespace cli
         vm.register_validator(std::make_unique<NumberValidator>());
     }
 
-    inline Application::~Application() {
+    INLINE Application::~Application() {
         ValidatorManager::instance().unregister_all_validators();
     }
 

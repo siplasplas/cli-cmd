@@ -76,7 +76,7 @@ namespace cli
 
     class Parameter: public Option
     {
-        std::string m_expect;
+        std::string m_expectType;
         ParameterMode m_parameterMode;
         std::string m_defValue;
     public:
@@ -85,7 +85,7 @@ namespace cli
 
         Parameter(const Parameter& base, ParameterMode overrideMode, std::string defVal = "")
                : Option(base.name(), base.description()),
-                m_expect(base.m_expect),m_parameterMode(overrideMode), m_defValue(std::move(defVal)) {}
+                m_expectType(base.m_expectType),m_parameterMode(overrideMode), m_defValue(std::move(defVal)) {}
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] OptionKind kind() const override {
@@ -94,20 +94,27 @@ namespace cli
         [[nodiscard]] ParameterMode parameterMode() const{
             return m_parameterMode;
         }
-        [[nodiscard]] std::string expect() const {
-            return m_expect;
+        [[nodiscard]] std::string expectType() const {
+            return m_expectType;
         }
         [[nodiscard]] std::string defValue() const {
             return m_defValue;
         }
     };
 
-    struct Argument
+    class Argument
     {
-        std::string name;
-        std::string type;
+        std::string m_name;
+        std::string m_expectType;
+    public:
         Argument()= default;
-        Argument(std::string name, std::string type);
+        Argument(std::string name, std::string expectType);
+        [[nodiscard]] std::string name() const {
+            return m_name;
+        }
+        [[nodiscard]] std::string expectType() const {
+            return m_expectType;
+        }
     };
 
     struct ArgumentValue
