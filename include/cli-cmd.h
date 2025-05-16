@@ -149,6 +149,7 @@ namespace cli
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
         explicit Actual(std::string commandName): m_name(std::move(commandName)){}
         void clearActual();
+        [[nodiscard]] std::optional<std::string> getValue(const std::string &key) const;
     };
 
     class Formal

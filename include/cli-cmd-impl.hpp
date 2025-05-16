@@ -4,7 +4,6 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
-#include <unordered_map>
 #include <utility>
 
 #include "cli-cmd.h"
@@ -134,6 +133,15 @@ namespace cli
         errNumber = 0;
         errorStr = "";
         mostSimilar.clear();
+    }
+
+    INLINE std::optional<std::string> Actual::getValue(const std::string& key) const {
+        auto it = parameterMap.find(key);
+        if (it != parameterMap.end()) {
+            return it->second;
+        } else {
+            return std::nullopt;
+        }
     }
 
     INLINE void Formal::checkNames(Application *app, const std::string &name, const std::string &shorthand) {
