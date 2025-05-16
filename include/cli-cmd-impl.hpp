@@ -178,6 +178,8 @@ namespace cli
         const std::string& desc, const std::string &expect, const std::string &defValue,
         ParameterMode parameterMode)
     {
+        if (parameterMode == ParameterMode::Defaulted && defValue.empty())
+            throw std::logic_error("default parameter can't be empty");
         if (isGlobal && app->globalOptionsLocked)
             throw std::logic_error("global options already locked. use this method before AddCommand");
         checkNames(app, name, shorthand);
