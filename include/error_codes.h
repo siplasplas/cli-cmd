@@ -14,6 +14,7 @@ namespace cli::ErrorCode {
     inline constexpr int OptionUsedTwice    = 10;
     inline constexpr int IsNotExpectedTypeArg    = 11;
     inline constexpr int IsNotExpectedTypeParam  = 12;
+    inline constexpr int BadArgumentParsing      = 13;
 
 } // namespace cli::ErrorCode
 
@@ -57,6 +58,9 @@ namespace cli::ErrorMessage {
 
     inline constexpr const char* IsNotExpectedTypeParam =
         "error: argument '%s' must be type(s) `%s', for param `%s'";
+
+    inline constexpr const char* BadArgumentParsing =
+            "error: bad argument parsing for '%s'";
 
 } // namespace cli::ErrorMessage
 
