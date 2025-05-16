@@ -149,11 +149,7 @@ namespace cli
     }
 
     INLINE void Formal::checkNames(Application *app, const std::string &name, const std::string &shorthand) {
-        std::string errStr;
-        if (app->combineOpts || !shorthand.empty())
-            errStr = tokenError(name, ArgType::LongOption, app->combineOpts);
-        else
-            errStr = tokenError(name, {ArgType::LongOption, ArgType::GccOption}, app->combineOpts);
+        std::string errStr = tokenError(name, {ArgType::LongOption, ArgType::GccOption, ArgType::ShortOption}, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
         errStr = tokenError(shorthand, {ArgType::ShortOption, ArgError::InvalidEmpty}, app->combineOpts);
@@ -161,7 +157,15 @@ namespace cli
             throw std::invalid_argument(errStr);
     }
 
-    INLINE void Formal::addShorthand(Application *app, const std::string &name, const std::string &shorthand) {
+    INLINE void Formal::addShorthand(Application *app, const std::string &name, std::string shorthand) {
+        auto nameClass = classifyToken(name, app->combineOpts);
+        if (nameClass == ArgType::ShortOption) {
+            if (shorthand.empty())
+                shorthand = name;
+            else if (shorthand != name)
+                throw std::invalid_argument(fmt("two short forms are differ %s and %s",
+                    name.c_str(), shorthand.c_str()));
+        }
         if (!shorthand.empty())
         {
             auto it = app->shorthandMap.find(shorthand);

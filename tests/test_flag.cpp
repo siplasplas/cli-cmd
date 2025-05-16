@@ -17,6 +17,8 @@ std::unique_ptr<cli::Application> makeAppWithFlags() {
         .addArgs("directory", "auto-path", 0, 1)
         .addFlag("--local", "","")
         .addFlag("--verbose", "-v","")
+        .addFlag("-B", "-B","")
+        .addFlag("-S", "","")
         .handler(clone_);
 
     return app;
@@ -38,6 +40,16 @@ TEST(FlagTest, FlagsFormalDescription) {
                 "flagMode": "Present",
                 "name": "--verbose"
             }
+            ,
+            {
+                "flagMode": "Present",
+                "name": "-B"
+            }
+            ,
+            {
+                "flagMode": "Present",
+                "name": "-S"
+            }
         ],
         "parameters": [],
         "varargs": {
@@ -55,12 +67,12 @@ TEST(FlagTest, FlagsFormalDescription) {
 TEST(FlagTest, FlagsParsingAndIgnored) {
     auto app = makeAppWithFlags();
 
-    app->parse("test clone https://github.com/a/b.git --local -v --other");
+    app->parse("test clone https://github.com/a/b.git --local -B -S -v --other");
 
     json expectedActual = R"({
         "command": "clone",
         "error": "UnknownLongOption",
-        "flag_set": ["--local", "--verbose"],
+        "flag_set": ["--local", "--verbose", "-B", "-S"],
         "parameter_map": {},
         "arguments": [
             {

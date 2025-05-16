@@ -155,7 +155,7 @@ namespace cli
     class Formal
     {
         static void checkNames(Application *app, const std::string &name, const std::string &shorthand);
-        static void addShorthand(Application *app, const std::string &name, const std::string &shorthand);
+        static void addShorthand(Application *app, const std::string &name, std::string shorthand);
         bool isGlobal;
     public:
         explicit Formal(bool isGlobal):isGlobal(isGlobal){}
