@@ -449,13 +449,13 @@ namespace cli
             auto tokenClass = classifyToken(arg, app->combineOpts);
             std::string optStr;
             std::string optArg;
-            if (tokenClass == LongEquals || tokenClass == ShortEquals) {
+            if (tokenClass == LongEquals || tokenClass == ShortEquals || tokenClass == GccEquals) {
                 auto p = splitEquals(arg);
                 arg = p.first;
                 optArg = p.second;
             }
             switch (tokenClass) {
-                case LongOption: case LongEquals:
+                case LongOption: case LongEquals: case GccOption: case GccEquals:
                     optStr = arg;
                     break;
                 case ShortOption: case ShortEquals: {
