@@ -343,11 +343,46 @@ namespace cli
         return *this;
     }
 
+    INLINE Command& Command::overrideParameter(const std::string& name, ParameterMode parameterMode,
+        const std::string& defValue)
+    {
+        if (parameterMode == ParameterMode::Defaulted) {
+            if (defValue.empty())
+                throw std::logic_error("default parameter can't be empty for mode Defaulted");
+        } else {
+            if (!defValue.empty())
+                throw std::logic_error("default parameter must be empty for mode != Defaulted");
+        }
+        if (formal.optionMap.find(name) != formal.optionMap.end())
+            throw std::invalid_argument(fmt("local option '%s' already exists", name.c_str()));
+        auto it = app->formal.optionMap.find(name);
+        if (it == app->formal.optionMap.end())
+            throw std::invalid_argument(fmt("global option '%s' must exist", name.c_str()));
+        auto opt = it->second.get();
+        auto base_parameter = dynamic_cast<Parameter*>(opt);
+        auto parameter = std::make_shared<Parameter>(*base_parameter, parameterMode, defValue);
+        formal.optionMap[name] = parameter;
+        return *this;
+    }
+
+    INLINE Command& Command::hideOption(const std::string& name) {
+        if (formal.optionMap.find(name) != formal.optionMap.end())
+            throw std::invalid_argument(fmt("local option '%s' already exists", name.c_str()));
+        auto it = app->formal.optionMap.find(name);
+        if (it == app->formal.optionMap.end())
+            throw std::invalid_argument(fmt("global option '%s' must exist", name.c_str()));
+        hiddenOptNames.insert(name);
+        return *this;
+    }
+
     INLINE void Command::buildMergedOptions() {
         availableOptionMap = formal.optionMap;
         for (const auto& [key, value] : app->formal.optionMap) {
             if (availableOptionMap.find(key) == availableOptionMap.end())
                 availableOptionMap[key] = value;
+        }
+        for (const auto& name: hiddenOptNames) {
+            availableOptionMap.erase(name);
         }
     }
 

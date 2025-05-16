@@ -176,6 +176,7 @@ namespace cli
         void printSimilars();
         void printErrors();
         void buildMergedOptions();
+        std::set<std::string> hiddenOptNames = {};
     public:
         Command(std::string name, Application* app): Actual(std::move(name)), formal(false),app(app) {}
         Formal formal;
@@ -194,9 +195,12 @@ namespace cli
         Command& addParameter(const std::string& name, const std::string& shorthand,
             const std::string& desc, const std::string &expect);
         Command &addReqParameter(const std::string& name, const std::string& shorthand,
-            const std::string& desc, const std::string &expect);
+                                 const std::string& desc, const std::string &expect);
         Command &addDefParameter(const std::string& name, const std::string& shorthand,
             const std::string& desc, const std::string &expect, const std::string &defValue);
+        Command &overrideParameter(const std::string &name, ParameterMode parameterMode,
+            const std::string& defValue = "");
+        Command &hideOption(const std::string &name);
         void execute();
         void print() const;
     };
