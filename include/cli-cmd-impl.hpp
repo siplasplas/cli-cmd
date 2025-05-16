@@ -166,6 +166,10 @@ namespace cli
             throw std::logic_error("global options already locked. use this method before AddCommand");
         checkNames(app, name, shorthand);
         addShorthand(app, name, shorthand);
+        if (optionMap.find(name) != optionMap.end())
+            throw std::invalid_argument(fmt("option '%s' already exists", name.c_str()));
+        if (!isGlobal  && app->formal.optionMap.find(name) != app->formal.optionMap.end())
+            throw std::invalid_argument(fmt("option '%s' already exists globally", name.c_str()));
         auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
         optionMap[name] = flag;
     }
@@ -177,6 +181,10 @@ namespace cli
             throw std::logic_error("global options already locked. use this method before AddCommand");
         checkNames(app, name, shorthand);
         addShorthand(app, name, shorthand);
+        if (optionMap.find(name) != optionMap.end())
+            throw std::invalid_argument(fmt("option '%s' already exists", name.c_str()));
+        if (!isGlobal  && app->formal.optionMap.find(name) != app->formal.optionMap.end())
+            throw std::invalid_argument(fmt("option '%s' already exists globally", name.c_str()));
         auto parameter = std::make_shared<Parameter>(name, desc, defValue, expect, parameterMode);
         optionMap[name] = parameter;
     }
