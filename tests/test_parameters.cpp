@@ -18,7 +18,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
 		{
 			"defValue": "",
 			"desc": "Output file path",
-			"expectType": "linux-path",
+			"expectType": "general-path",
 			"name": "--output",
 			"parameterMode": "Optional"
 		}
