@@ -10,7 +10,7 @@ void test(int cmdDepth, int helpAvailability) {
         .ref("categoryCmd");
     app.addCommand("globcmd").desc("glob command")
         .addFlag("--release", "-r", "Enable release mode")
-        .addParameter("--output", "-o", "linux-path", "Set output file path")
+        .addParameter("--output", "-o", "Set output file path", "general-path")
         .handler([](const cli::Actual* a) {
             if (a->containsFlag("--release")) {
                 std::cout << "Release mode ON\n";

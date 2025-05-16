@@ -50,7 +50,7 @@ TEST(TypeTest, ArgsType) {
 TEST(TypeTest, ParameterType) {
     cli::Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addParameter("--output", "-o", "windows-path", "Output file path")
+        .addParameter("--output", "-o", "Output file path", "windows-path")
         .handler(dummy_handler);
     app.parse("test build -o c:\\path\\to\\file");
     auto cmd = app.currentCommand;

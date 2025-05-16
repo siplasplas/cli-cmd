@@ -8,7 +8,7 @@ static void dummy_handler(const Actual*) {}
 TEST(ParameterTest, OptionalParameterWithValue) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addParameter("--output", "-o", "linux-path", "Output file path")
+        .addParameter("--output", "-o", "Output file path", "general-path")
         .handler(dummy_handler);
 
     json expectedFormal = R"({

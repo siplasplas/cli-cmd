@@ -189,7 +189,8 @@ namespace cli
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
         Command& addFlag(const std::string& name, const std::string& shorthand, const std::string& desc);
-        Command& addParameter(const std::string& name, const std::string& shorthand, const std::string& expect, const std::string& desc);
+        Command& addParameter(const std::string& name, const std::string& shorthand,
+            const std::string& desc, const std::string &expect);
         Command &addReqParameter(const std::string&, const std::string&, const std::string&, const std::string&);
         Command &addDefParameter(const std::string&, const std::string&, const std::string&, const std::string&,
                                  const std::string&);
@@ -319,8 +320,8 @@ namespace cli
         Category* addCategory(const std::string& caption);
         Category& addHelpCategory(const std::string& caption);
         Command& addCommand(std::string commandName);
-        Application &addParameter(const std::string &name, const std::string &shorthand, const std::string &expect,
-                                  const std::string &desc);
+        Application &addParameter(const std::string &name, const std::string &shorthand,
+            const std::string& desc, const std::string &expect);
         Application &addReqParameter(const std::string &name, const std::string &shorthand, const std::string &expect,
                                      const std::string &desc);
         Application &addDefParameter(const std::string &name, const std::string &shorthand, const std::string &defValue,

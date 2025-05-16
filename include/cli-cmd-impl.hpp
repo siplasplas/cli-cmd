@@ -320,9 +320,9 @@ namespace cli
     }
 
     INLINE Command& Command::addParameter(const std::string& name, const std::string& shorthand,
-        const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        //formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
         return *this;
     }
 
@@ -906,9 +906,9 @@ namespace cli
     }
     // can be overridden
     INLINE Application& Application::addParameter(const std::string& name, const std::string& shorthand,
-        const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        //formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
         return *this;
     }
 
