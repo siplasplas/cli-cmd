@@ -9,10 +9,10 @@
 
 ## Parameter Handling
 
-- [ ] Finalize support for parameters:
+- [x] Finalize support for parameters:
     - `addParameter`, `addReqParameter`, `addDefParameter`
     - Integration with `--help`, JSON output, and error codes
     - Command-local and app-global parameter shadowing
 - [ ] Support `--param=value` and `--param value`
 - [x] Consistent behavior for required vs optional vs defaulted parameters
-- [ ] Support override global options
+- [x] Support override global options
