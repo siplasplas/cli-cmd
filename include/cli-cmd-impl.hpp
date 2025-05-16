@@ -517,7 +517,7 @@ namespace cli
         clearActual();
         if (app->cmdDepth == 3)
             for (size_t i = start; i < args.size(); i++) {
-                if (args[i] == "--all")
+                if (args[i] == "--all" || args[i] == "-a")
                     flagSet.insert(args[i]);
             }
         for (size_t i = start; i < args.size(); i++) {
@@ -696,7 +696,8 @@ namespace cli
      */
     INLINE void Application::printCommands(const Actual* actual) const
     {
-        const bool bAll = actual->containsFlag("--all");
+        const bool bAll = actual->containsFlag("--all")
+                        || actual->containsFlag("-a");
 
         for (const auto& cmd : commands) {
             std::cout << cmd->to_string() << std::endl;

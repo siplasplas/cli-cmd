@@ -3,7 +3,12 @@
 void test(int cmdDepth, int helpAvailability) {
     std::cout << cli::fmt("==================cmdDepth=%d, helpAvailability=%d\n",cmdDepth,helpAvailability);
     cli::Application app("test", cmdDepth,1,helpAvailability);
-    app.addCommand("build")
+    auto category = app.addCategory("Category");
+    category->addCommand("extendedCmd").desc("visible with --all");
+    category->addCommand("categoryCmd").desc("visible with simple help");
+    app.addHelpCategory("Commons")
+        .ref("categoryCmd");
+    app.addCommand("globcmd").desc("glob command")
         .addFlag("--release", "-r", "Enable release mode")
         .addParameter("--output", "-o", "linux-path", "Set output file path")
         .handler([](const cli::Actual* a) {
@@ -19,7 +24,6 @@ void test(int cmdDepth, int helpAvailability) {
     app.execute();
 
     app.parse("test help");
-    auto cmd = app.currentCommand;
     app.execute();
 
     app.parse("test help build");
