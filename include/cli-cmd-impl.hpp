@@ -322,19 +322,19 @@ namespace cli
     INLINE Command& Command::addParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        //formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
         return *this;
     }
 
     INLINE Command& Command::addReqParameter(const std::string& name, const std::string& shorthand,
-        const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect)
     {
         formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Required, desc);
         return *this;
     }
 
     INLINE Command& Command::addDefParameter(const std::string& name, const std::string& shorthand,
-        const std::string& defValue, const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect, const std::string &defValue)
     {
         formal.addParameter(app, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
         return *this;
@@ -908,19 +908,19 @@ namespace cli
     INLINE Application& Application::addParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        //formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
         return *this;
     }
 
     INLINE Application& Application::addReqParameter(const std::string& name, const std::string& shorthand,
-        const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect)
     {
         formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Required, desc);
         return *this;
     }
 
     INLINE Application& Application::addDefParameter(const std::string& name, const std::string& shorthand,
-        const std::string& defValue, const std::string& expect, const std::string& desc)
+        const std::string& desc, const std::string &expect, const std::string &defValue)
     {
         formal.addParameter(this, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
         return *this;

@@ -188,12 +188,14 @@ namespace cli
         Command& addArg(std::string name, std::string type);
         Command& addArgs(std::string name, std::string type, size_t min_n, size_t max_n);
         Command& addArgs(std::string name, std::string type, size_t min_n);
-        Command& addFlag(const std::string& name, const std::string& shorthand, const std::string& desc);
+        Command& addFlag(const std::string& name, const std::string& shorthand,
+            const std::string& desc);
         Command& addParameter(const std::string& name, const std::string& shorthand,
             const std::string& desc, const std::string &expect);
-        Command &addReqParameter(const std::string&, const std::string&, const std::string&, const std::string&);
-        Command &addDefParameter(const std::string&, const std::string&, const std::string&, const std::string&,
-                                 const std::string&);
+        Command &addReqParameter(const std::string& name, const std::string& shorthand,
+            const std::string& desc, const std::string &expect);
+        Command &addDefParameter(const std::string& name, const std::string& shorthand,
+            const std::string& desc, const std::string &expect, const std::string &defValue);
         void execute();
         void print() const;
     };
@@ -322,10 +324,10 @@ namespace cli
         Command& addCommand(std::string commandName);
         Application &addParameter(const std::string &name, const std::string &shorthand,
             const std::string& desc, const std::string &expect);
-        Application &addReqParameter(const std::string &name, const std::string &shorthand, const std::string &expect,
-                                     const std::string &desc);
-        Application &addDefParameter(const std::string &name, const std::string &shorthand, const std::string &defValue,
-                                     const std::string &expect, const std::string &desc);
+        Application &addReqParameter(const std::string &name, const std::string &shorthand,
+            const std::string& desc, const std::string &expect);
+        Application &addDefParameter(const std::string &name, const std::string &shorthand,
+            const std::string& desc, const std::string &expect, const std::string &defValue);
         Application &addFlag(const std::string &name, const std::string &shorthand, const std::string &desc);
     };
 

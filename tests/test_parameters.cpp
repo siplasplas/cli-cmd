@@ -37,7 +37,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
 TEST(ParameterTest, RequiredParameterMissing) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addReqParameter("--config", "-c", "linux-path", "Configuration file")
+        .addReqParameter("--config", "-c", "Configuration file", "general-path")
         .handler(dummy_handler);
 
     app.parse("test build");
@@ -48,7 +48,7 @@ TEST(ParameterTest, RequiredParameterMissing) {
 TEST(ParameterTest, DefaultParameterUsed) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addDefParameter("--log", "-l", "default.log", "linux-path", "Log output file")
+        .addDefParameter("--log", "-l", "Log output file", "general-path", "default.log")
         .handler(dummy_handler);
 
     app.parse("test build");
