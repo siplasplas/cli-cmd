@@ -9,9 +9,10 @@ TEST(EqualsParamTest, AcceptsEqualsSyntax) {
         .addParameter("--output", "-o", "", "path")
         .addParameter("--config", "-c", "", "path")
         .addParameter("--log-file", "", "", "path")
-        .handler([](const cli::Actual* a) {
+        .handler([](const cli::Actual* a)->int {
             EXPECT_EQ(a->getValue("--output"), std::optional<std::string>("file.txt"));
             EXPECT_EQ(a->getValue("--config"), std::optional<std::string>("config.json"));
+            return 0;
         });
 
     app.parse("test build --output=file.txt -c=config.json");
@@ -27,10 +28,11 @@ TEST(CompactFlagsTest, ExpandsCompactFlags) {
         .addFlag("--force", "-f", "")
         .addFlag("--debug", "-d", "")
         .addFlag("--dry-run", "-n", "")
-        .handler([](const cli::Actual* a) {
+        .handler([](const cli::Actual* a)->int {
             EXPECT_TRUE(a->containsFlag("-v"));
             EXPECT_TRUE(a->containsFlag("-f"));
             EXPECT_TRUE(a->containsFlag("-d"));
+            return 0;
         });
 
     app.parse("test run -vfd");
@@ -47,11 +49,12 @@ TEST(CompactFlagsTest, GCCOptions) {
         .addFlag("--debug", "-d", "")
         .addFlag("--dry-run", "-n", "")
         .addParameter("-vfd", "", "", "path")
-        .handler([](const cli::Actual* a) {
+        .handler([](const cli::Actual* a)->int {
             EXPECT_FALSE(a->containsFlag("-v"));
             EXPECT_FALSE(a->containsFlag("-f"));
             EXPECT_FALSE(a->containsFlag("-d"));
             EXPECT_EQ(a->getValue("-vfd"), std::optional<std::string>("path/to"));
+            return 0;
         });
 
     app.parse("test run -vfd path/to");

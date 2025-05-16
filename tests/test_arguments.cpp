@@ -11,7 +11,7 @@ std::unique_ptr<cli::Application> makeAppWithClone() {
         .desc("Clone a repository into a new directory")
         .addArg("repository", "url")
         .addArgs("directory", "auto-path", 0, 1)
-        .handler([](const cli::Actual*) {}); // test stub
+        .handler([](const cli::Actual*)->int {return 0;}); // test stub
 
     return app;
 }

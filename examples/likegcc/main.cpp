@@ -11,9 +11,10 @@ void show_version() {
     std::cout << "version" << std::endl;
 }
 
-void mainHandler(const cli::Actual*)
+int mainHandler(const cli::Actual*)
 {
     std::cout << "hello from main handler!";
+    return 0;
 }
 
 int main(int argc, char** argv) {

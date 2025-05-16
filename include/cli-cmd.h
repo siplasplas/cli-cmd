@@ -22,7 +22,7 @@ namespace cli
     void to_json(json& j, const ArgumentValue& v);
     void to_json(json& j, const Actual& a);
 
-    using Action = std::function<void(Actual*)>;
+    using Action = std::function<int(Actual*)>;
 
     enum class OptionKind { Flag, Parameter };
 
@@ -204,7 +204,7 @@ namespace cli
         Command &overrideParameter(const std::string &name, ParameterMode parameterMode,
             const std::string& defValue = "");
         Command &hideOption(const std::string &name);
-        void execute();
+        int execute();
         void print() const;
     };
 
@@ -290,10 +290,10 @@ namespace cli
        int helpAvailability;
     private:
         void printCommands(const Actual* actual) const;
-        void commandHelp(Actual* actual);
+        int commandHelp(Actual* actual);
         [[nodiscard]] std::vector<std::string>  proposeSimilar(const std::string &arg) const;
         static bool findHelpOption(const std::vector<std::string> &args);
-        void helpAboutHelp() const;
+        int helpAboutHelp() const;
         /**
          * @brief Locks the definition of global options after commands are created.
          *
@@ -309,8 +309,8 @@ namespace cli
          */
         bool globalOptionsLocked = false;
     protected:
-        void help(Actual*);
-        void mainCommandStub(Actual*);
+        int help(Actual*);
+        int mainCommandStub(Actual*);
         void initSystemCommands();
         void registerValidators();
     public:
@@ -321,12 +321,12 @@ namespace cli
         std::shared_ptr<Command> mainCommand;
         std::shared_ptr<Command> helpCommand;
         std::shared_ptr<Command> currentCommand;
-        void execute();
+        int execute();
         std::shared_ptr<Command> getCommand(const std::string& name);
         void parse(const std::vector<std::string>& args);
         void parse(const std::string& line);
         void parse(int argc, char** argv);
-        void run(int argc, char** argv);
+        int run(int argc, char** argv);
         Category* addCategory(const std::string& caption);
         Category& addHelpCategory(const std::string& caption);
         Command& addCommand(std::string commandName);

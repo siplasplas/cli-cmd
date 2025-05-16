@@ -307,12 +307,13 @@ namespace cli
         }
     }
 
-    INLINE void Command::execute()
+    INLINE int Command::execute()
     {
-        if (errNumber)
+        if (errNumber) {
             printErrors();
-        else
-            m_handler(this);
+            return errNumber;
+        } else
+            return m_handler(this);
     }
 
     INLINE void Command::print() const
@@ -706,10 +707,12 @@ namespace cli
         return *helpCategories.back().get();
     }
 
-    INLINE void Application::execute()
+    INLINE int Application::execute()
     {
         if (currentCommand)
-            currentCommand->execute();
+            return currentCommand->execute();
+        else
+            return 255;
     }
 
     INLINE std::shared_ptr<Command> Application::getCommand(const std::string& name)
@@ -791,10 +794,10 @@ namespace cli
         parse(args);
     }
 
-    INLINE void Application::run(int argc, char** argv)
+    INLINE int Application::run(int argc, char** argv)
     {
         parse(argc, argv);
-        execute();
+        return execute();
     }
 
     INLINE Command& Application::addCommand(std::string commandName)
@@ -850,9 +853,10 @@ namespace cli
                 }
             }
         }
+        return;
     }
 
-    INLINE void Application::commandHelp(Actual* actual)
+    INLINE int Application::commandHelp(Actual* actual)
     {
         auto arg = actual->arguments[0];
         auto it = commandMap.find(arg.value);
@@ -861,25 +865,27 @@ namespace cli
             auto cmd = std::make_shared<Command>(arg.value, this);
             cmd->commandNotFound(arg.value);
             cmd->printErrors();
-            return;
+            return 0;
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
         for (const auto& [key, opt] : cmd->availableOptionMap) {
             std::cout << opt->to_string() << std::endl;
         }
+        return 0;
     }
 
 
-    INLINE void Application::help(Actual* actual)
+    INLINE int Application::help(Actual* actual)
     {
         if (actual->arguments.empty())
             printCommands(actual);
         else
             commandHelp(actual);
+        return 0;
     }
 
-    INLINE void Application::helpAboutHelp() const {
+    INLINE int Application::helpAboutHelp() const {
         std::cout << appName << ": ";
         std::cout << "use --help";
         if (helpAvailability > 0)
@@ -888,34 +894,36 @@ namespace cli
             std::cout << " [--all]";
         std::cout << " [command]";
         std::cout << std::endl;
+        return 0;
     }
 
-    INLINE void Application::mainCommandStub(Actual* actual)
+    INLINE int Application::mainCommandStub(Actual* actual)
     {
         if (cmdDepth == 0)
         {
             std::cout << "stub command, use:" << std::endl << std::endl;
             std::cout << "  auto mainCommand = app.mainCommand;" << std::endl;
             std::cout << "  mainCommand->setHandler(mainHandler);" << std::endl;
+            return 1;
         }
         else if (helpAvailability == 2)
-            help(actual);
+            return help(actual);
         else
-            helpAboutHelp();
+            return helpAboutHelp();
     }
 
     INLINE void Application::initSystemCommands()
     {
-        Action actionStub = [this](Actual* actual) {
-            mainCommandStub(actual);
+        Action actionStub = [this](Actual* actual)->int {
+            return mainCommandStub(actual);
         };
         mainCommand = std::make_shared<Command>(appName, this);
         mainCommand->desc(appName);
         mainCommand->handler(actionStub);
         mainCommand->app = this;
 
-        Action actionHelp = [this](Actual* actual) {
-            help(actual);
+        Action actionHelp = [this](Actual* actual)->int {
+            return help(actual);
         };
         helpCommand = std::make_shared<Command>("help", this);
         helpCommand->desc("Display help information about " + appName);

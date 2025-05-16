@@ -2,7 +2,7 @@
 #include "cli-cmd.hpp"
 
 // Dummy handler
-static void dummy_handler(const cli::Actual*) {}
+static int dummy_handler(const cli::Actual*) {return 1;}
 
 TEST(RegisteredTypeTest, BadTypename) {
     cli::Application app("test", 1, 1, 1);
@@ -11,7 +11,7 @@ TEST(RegisteredTypeTest, BadTypename) {
                 .desc("Clone a repository into a new directory")
                 .addArg("repository", "bad_url") // <== non existed type
                 .addArgs("directory", "auto-path", 0, 1)
-                .handler([](const cli::Actual*) {});
+                .handler([](const cli::Actual*) {return 0;});
         }, std::invalid_argument);
 }
 

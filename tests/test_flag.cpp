@@ -6,7 +6,7 @@
 using json = nlohmann::json;
 
 // Dummy handler
-static void clone_(const cli::Actual*) {}
+static int clone_(const cli::Actual*) { return 0;}
 
 std::unique_ptr<cli::Application> makeAppWithFlags() {
     auto app = std::make_unique<cli::Application>("test", 1, 1, 1);

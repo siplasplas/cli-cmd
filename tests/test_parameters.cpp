@@ -3,7 +3,7 @@
 
 using namespace cli;
 
-static void dummy_handler(const Actual*) {}
+static int dummy_handler(const Actual*) { return 0; }
 
 TEST(ParameterTest, OptionalParameterWithValue) {
     Application app("test", 1, 1, 1);
