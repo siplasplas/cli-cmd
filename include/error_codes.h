@@ -20,7 +20,7 @@ namespace cli::ErrorCode {
 namespace cli::ErrorMessage {
 
     inline constexpr const char* MissingHandler =
-        "error: %s is placeholder with positional arguments:";
+        "error: %s is placeholder with actual data:";
 
     inline constexpr const char* TooFewArguments =
         "error: %s have %d arguments but minimal is %d";

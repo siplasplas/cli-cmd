@@ -275,9 +275,14 @@ namespace cli
     INLINE void Command::printErrors() {
         if (errorStr)
             std::cout << *errorStr << std::endl;
-        if (errNumber == ErrorCode::MissingHandler)
+        if (errNumber == ErrorCode::MissingHandler) {
             for (const auto& arg : arguments)
                 std::cout << arg.value << " = [" << arg.argument.name() << ":" << arg.argument.expectType() << "]\n";
+            for (const auto& flag : flagSet)
+                std::cout << flag << std::endl;;
+            for (const auto& p : parameterMap)
+                std::cout << p.first << " : " << p.second << std::endl;;
+        }
         else if (errNumber == ErrorCode::UnknownCommand) {
             printSimilars();
         }
@@ -335,6 +340,14 @@ namespace cli
         return *this;
     }
 
+    INLINE void Command::buildMergedOptions() {
+        availableOptionMap = formal.optionMap;
+        for (const auto& [key, value] : app->formal.optionMap) {
+            if (availableOptionMap.find(key) == availableOptionMap.end())
+                availableOptionMap[key] = value;
+        }
+    }
+
     INLINE std::string Flag::to_string() const
     {
         std::string indent(3, ' ');
@@ -377,9 +390,10 @@ namespace cli
     INLINE void Command::parse(int start, const std::vector<std::string>& args)
     {
         clearActual();
+        buildMergedOptions();
         size_t count = 0, varCount = 0;
         std::map<std::string, int> optCount;
-        for (const auto& [key, _] : formal.optionMap) {
+        for (const auto& [key, _] : availableOptionMap) {
             optCount[key] = 0;
         }
         size_t argNumber = start;
@@ -415,8 +429,8 @@ namespace cli
                 default:; //positional
             }
             if (!optStr.empty()) {
-                auto it = formal.optionMap.find(optStr);
-                if (it  == formal.optionMap.end())
+                auto it = availableOptionMap.find(optStr);
+                if (it  == availableOptionMap.end())
                 {
                     errorStr = fmt(ErrorMessage::UnknownLongOption, optStr.c_str());
                     errNumber = ErrorCode::UnknownLongOption;
@@ -479,7 +493,7 @@ namespace cli
         }
         for (const auto& pair : optCount) {
             if (pair.second == 0) {
-                auto option = formal.optionMap[pair.first].get();
+                auto option = availableOptionMap[pair.first].get();
                 if (option->kind() != OptionKind::Parameter)
                     continue;
                 auto parameter = dynamic_cast<Parameter*>(option);
@@ -537,6 +551,8 @@ namespace cli
             if (type == BareIdentifier) {
                 Argument formalArgument("command", "identifier");
                 arguments.emplace_back(formalArgument, args[i]);
+                auto cmd = app->getCommand(args[i]);
+                cmd->buildMergedOptions();
                 break;
             }
         }
@@ -749,7 +765,7 @@ namespace cli
         }
         auto cmd = it->second;
         std::cout << cmd->to_string() << std::endl;
-        for (const auto& [key, opt] : cmd->formal.optionMap) {
+        for (const auto& [key, opt] : cmd->availableOptionMap) {
             std::cout << opt->to_string() << std::endl;
         }
     }

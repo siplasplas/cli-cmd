@@ -138,6 +138,7 @@ namespace cli
     {
         virtual ~Actual() = default;
         std::string m_name;
+        std::map<std::string, std::shared_ptr<Option>> availableOptionMap = {};
         std::vector<ArgumentValue> arguments;
         std::set<std::string> flagSet;
         std::map<std::string, std::string> parameterMap;
@@ -157,9 +158,9 @@ namespace cli
         bool isGlobal;
     public:
         explicit Formal(bool isGlobal):isGlobal(isGlobal){}
-        std::map<std::string, std::shared_ptr<Option>> optionMap;
-        std::vector<Argument> argList;
-        VaArguments vaArgs;
+        std::map<std::string, std::shared_ptr<Option>> optionMap = {};
+        std::vector<Argument> argList = {};
+        VaArguments vaArgs = {};
         void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
         void addParameter(Application * app, const std::string& name, const std::string& shorthand,
         const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
@@ -173,6 +174,7 @@ namespace cli
         friend class Application;
         void printSimilars();
         void printErrors();
+        void buildMergedOptions();
     public:
         Command(std::string name, Application* app): Actual(std::move(name)), formal(false),app(app) {}
         Formal formal;
