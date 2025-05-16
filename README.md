@@ -17,8 +17,9 @@ A C++ CLI argument parsing library inspired by Git/GCC, featuring:
    nlohmann-json3-dev meson
 ```
 ## Installation
-Add as submodule to yout repository.
-Library has three modes: header-only, link a few *.cpp files or build library linked to program 
+Add as submodule to your repository.
+The library supports three usage modes: header-only, directly linking a few .cpp files, 
+or building as a separate library. 
 To use header-only, simply #include "cli-cmd.hpp"; 
 to use link mode (useful if we have multiple .cpp, but now library code is so small, header-only is enough),
 * #include "cli-cmd.h"
@@ -29,20 +30,19 @@ to use link mode (useful if we have multiple .cpp, but now library code is so sm
 ```c++
 #include "cli-cmd.hpp"
 
-void clone_(const cli::Actual* actual)
-{
-    std::cout << "hello from handler!";
-    std::cout << "   mycmd has " << actual->arguments.size() << " positional arguments"
-        << std::endl;
+void clone_(const cli::Actual* actual) {
+    std::cout << "hello from handler!\n";
+    std::cout << "   mycmd has " << actual->arguments.size() << " positional arguments\n";
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("first", 1, 1, 1);
-    app.addCommand("clone").desc("Clone a repository into a new directory")
-            .addArg("repository", "url").addArgs("directory", "auto-path", 0, 1)
-            .handler(clone_);
+    cli::Application app("first", 1, 1, 1); // cmdDepth, combineOpts, helpFlags
+    app.addCommand("clone")
+        .desc("Clone a repository into a new directory")
+        .addArg("repository", "url")
+        .addArgs("directory", "auto-path", 0, 1)
+        .handler(clone_);
     app.run(argc, argv);
-    return 0;
 }
 ```
 Build with
@@ -71,7 +71,7 @@ Example
 mycli build src --release --output bin/app
 
 Token       Category    Notes
-mycli       Program     Name of owur cli program = argv[0]
+mycli       Program     Name of our CLI program
 build       Command     Can be rather named subcommand while whole program is command   
 src         Argument    Positional input
 --release   Flag        Boolean switch
@@ -123,16 +123,16 @@ Flags and parameters in one group:
 
 If the last character in the group is a parameter (takes a value), it must be last:
 
-        Value via separate arg: myprog mycmd -vo path
+        Value via separate arg: mycli mycmd -vo path
         
 #### Free-form Arguments – Values Passed to Parameters or as Positional Arguments
    Any string (including special characters like /, :, . or even -) is allowed as a value to a parameter or as a positional argument, provided it's not interpreted as a flag or command.
    
    Examples:
 
-        myprog clone https://example.com/repo.git
-        myprog -o ./build/output.bin
-        myprog run --script ./test.sh
+        mycli clone https://example.com/repo.git
+        mycli -o ./build/output.bin
+        mycli run --script ./test.sh
    These are interpreted based on context - e.g., after -o, any value is accepted.
 
 #### Short Parameter with Equals
@@ -338,7 +338,7 @@ Users are accustomed to calling `--help` instead of command `help` as an option 
 especially in CLI tools modeled after `gcc`. 
 To support this expectation, the library defines `--help` in ways:
 
-- alone or hve parameter --all 
+- alone or with the parameter --all 
 - after command : gives help for this command
 - before command : gives help for this command
 
@@ -400,7 +400,7 @@ You can use or extend the following types:
 
 You can register your own validators using ValidatorManager
 
-💬 Summary
+Summary
 
     Types are declared in the addParameter(...), addReqParameter(...), addDefParameter(...) 
     or addArg(...), addArgs(...) methods.
@@ -408,3 +408,10 @@ You can register your own validators using ValidatorManager
     Multiple types can be specified as space-separated strings.
 
     This enables validation, better help messages, and improved UX (User Experience).
+
+
+If expect type not match, will error like:
+```shell
+error: argument '/path/to/file' must be type(s) `identifier', for param `--output'
+```
+ 
