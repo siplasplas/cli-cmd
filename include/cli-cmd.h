@@ -26,11 +26,6 @@ namespace cli
 
     enum class OptionKind { Flag, Parameter };
 
-    enum class FlagMode {
-        Present,
-        Hidden
-    };
-
     enum class ParameterMode {
         Optional,
         Required,
@@ -55,23 +50,15 @@ namespace cli
     };
 
 
-    class Flag: public Option
+    struct Flag: public Option
     {
-        FlagMode m_flagMode;
-    public:
-        Flag(std::string name, std::string description, FlagMode flagMode)
-            : Option(std::move(name), std::move(description)),m_flagMode(flagMode) {}
-
-        Flag(const Flag& base, FlagMode overrideMode)
-            : Option(base.name(), base.description()), m_flagMode(overrideMode) {}
+        Flag(std::string name, std::string description)
+            : Option(std::move(name), std::move(description)) {}
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] OptionKind kind() const override {
             return OptionKind::Flag;
         };
-        [[nodiscard]] FlagMode flagMode() const{
-            return m_flagMode;
-        }
     };
 
     class Parameter: public Option

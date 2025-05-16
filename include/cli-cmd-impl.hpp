@@ -38,15 +38,6 @@ namespace cli
         };
     }
 
-
-    INLINE const char* to_string_flagmode(FlagMode p) {
-        switch (p) {
-            case FlagMode::Present:  return "Present";
-            case FlagMode::Hidden:    return "Hidden";
-            default: return "<unknown>";
-        }
-    }
-
     INLINE const char* to_string_parametermode(ParameterMode p) {
         switch (p) {
             case ParameterMode::Optional:  return "Optional";
@@ -60,7 +51,6 @@ namespace cli
     INLINE void to_json(json& j, const Flag& f) {
         j = json{
                     {"name", f.name()},
-                    {"flagMode", to_string_flagmode(f.flagMode())},
             };
             if (!f.description().empty())
                 j["desc"] = f.description();
@@ -186,7 +176,7 @@ namespace cli
             throw std::invalid_argument(fmt("option '%s' already exists", name.c_str()));
         if (!isGlobal  && app->formal.optionMap.find(name) != app->formal.optionMap.end())
             throw std::invalid_argument(fmt("option '%s' already exists globally", name.c_str()));
-        auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
+        auto flag = std::make_shared<Flag>(name, desc);
         optionMap[name] = flag;
     }
 

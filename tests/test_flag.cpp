@@ -33,21 +33,17 @@ TEST(FlagTest, FlagsFormalDescription) {
         ],
         "flags": [
             {
-                "flagMode": "Present",
                 "name": "--local"
             },
             {
-                "flagMode": "Present",
                 "name": "--verbose"
             }
             ,
             {
-                "flagMode": "Present",
                 "name": "-B"
             }
             ,
             {
-                "flagMode": "Present",
                 "name": "-S"
             }
         ],
