@@ -162,8 +162,9 @@ namespace cli
         std::vector<Argument> argList = {};
         VaArguments vaArgs = {};
         void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
-        void addParameter(Application * app, const std::string& name, const std::string& shorthand,
-        const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
+        void addParameter(Application *app, const std::string& name, const std::string& shorthand,
+            const std::string& desc, const std::string &expect, const std::string &defValue,
+            ParameterMode parameterMode);
     };
 
     class Command: public Actual {

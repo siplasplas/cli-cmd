@@ -174,8 +174,9 @@ namespace cli
         optionMap[name] = flag;
     }
 
-    INLINE void Formal::addParameter(Application *app, const std::string &name, const std::string &shorthand,
-        const std::string &defValue, const std::string &expect, ParameterMode parameterMode, const std::string &desc)
+    INLINE void Formal::addParameter(Application *app, const std::string& name, const std::string& shorthand,
+        const std::string& desc, const std::string &expect, const std::string &defValue,
+        ParameterMode parameterMode)
     {
         if (isGlobal && app->globalOptionsLocked)
             throw std::logic_error("global options already locked. use this method before AddCommand");
@@ -322,21 +323,21 @@ namespace cli
     INLINE Command& Command::addParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        formal.addParameter(app, name, shorthand, desc, expect, "", ParameterMode::Optional);
         return *this;
     }
 
     INLINE Command& Command::addReqParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(app, name, shorthand, "", expect, ParameterMode::Required, desc);
+        formal.addParameter(app, name, shorthand, desc, expect, "", ParameterMode::Required);
         return *this;
     }
 
     INLINE Command& Command::addDefParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect, const std::string &defValue)
     {
-        formal.addParameter(app, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
+        formal.addParameter(app, name, shorthand, desc, expect, defValue, ParameterMode::Defaulted);
         return *this;
     }
 
@@ -908,21 +909,21 @@ namespace cli
     INLINE Application& Application::addParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        formal.addParameter(this, name, shorthand, desc, expect, "", ParameterMode::Optional);
         return *this;
     }
 
     INLINE Application& Application::addReqParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect)
     {
-        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Required, desc);
+        formal.addParameter(this, name, shorthand, desc, expect, "", ParameterMode::Required);
         return *this;
     }
 
     INLINE Application& Application::addDefParameter(const std::string& name, const std::string& shorthand,
         const std::string& desc, const std::string &expect, const std::string &defValue)
     {
-        formal.addParameter(this, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
+        formal.addParameter(this, name, shorthand, desc, expect, defValue, ParameterMode::Defaulted);
         return *this;
     }
 
