@@ -433,7 +433,59 @@ namespace cli
             throw std::invalid_argument(fmt("expected type '%s' is not registerd", this->m_expectType.c_str()));
     }
 
-    INLINE void Command::parse(int start, const std::vector<std::string>& args)
+    INLINE std::vector<std::string> Command::preprocessEquals(int start, const std::vector<std::string>& args) const {
+        std::vector<std::string> separated;
+        for (int i = 0; i < start; i++) {
+            separated.push_back(args[i]);
+        }
+        size_t argNumber = start;
+        while (argNumber < args.size()) {
+            auto& arg = args[argNumber];
+            auto tokenClass = (ArgType) classifyToken(arg, app->combineOpts);
+            if (in(tokenClass, {ShortEquals, LongEquals, CompactEquals, GccEquals})) {
+                auto p = splitEquals(arg);
+                separated.push_back(p.first);
+                separated.push_back(p.second);
+            } else
+                separated.push_back(arg);
+            argNumber++;
+        }
+        return separated;
+    }
+
+    /* assume is preprocessEquals first*/
+    INLINE std::vector<std::string> Command::preprocessCompact(int start, const std::vector<std::string>& args) const {
+        if (!app->combineOpts)
+            return args;
+        std::vector<std::string> separated;
+        for (int i = 0; i < start; i++) {
+            separated.push_back(args[i]);
+        }
+        size_t argNumber = start;
+        while (argNumber < args.size()) {
+            auto& arg = args[argNumber];
+            auto tokenClass = (ArgType) classifyToken(arg, app->combineOpts);
+            if (tokenClass == CompactFlags) {
+                for (size_t i = 1; i < arg.size(); i++) {
+                    std::string newShort = "-";
+                    newShort += arg[i];
+                    separated.push_back(newShort);
+                }
+            } else
+                separated.push_back(arg);
+            argNumber++;
+        }
+        return separated;
+    }
+
+    INLINE void Command::parse(int start, const std::vector<std::string>& args) {
+        auto args1 = preprocessEquals(start, args);
+        auto args2 = preprocessCompact(start, args1);
+        return parsePreprocessed(start, args2);
+    }
+
+    /* assume is preprocessEquals and preprocessCompact first*/
+    INLINE void Command::parsePreprocessed(int start, const std::vector<std::string>& args)
     {
         clearActual();
         buildMergedOptions();
@@ -448,17 +500,11 @@ namespace cli
             auto arg = args[argNumber];
             auto tokenClass = classifyToken(arg, app->combineOpts);
             std::string optStr;
-            std::string optArg;
-            if (tokenClass == LongEquals || tokenClass == ShortEquals || tokenClass == GccEquals) {
-                auto p = splitEquals(arg);
-                arg = p.first;
-                optArg = p.second;
-            }
             switch (tokenClass) {
-                case LongOption: case LongEquals: case GccOption: case GccEquals:
+                case LongOption: case GccOption:
                     optStr = arg;
                     break;
-                case ShortOption: case ShortEquals: {
+                case ShortOption: {
                     auto it = app->shorthandMap.find(arg);
                     if (it != app->shorthandMap.end()) {
                         optStr = it->second;
@@ -490,16 +536,16 @@ namespace cli
                 if (opt->kind() == OptionKind::Flag)
                     flagSet.insert(optStr);
                 else if (opt->kind() == OptionKind::Parameter) {
+                    std::string optArg;
                     auto parameter = dynamic_cast<Parameter*>(opt);
-                    if (tokenClass != LongEquals && tokenClass != ShortEquals) {
-                        argNumber++;
-                        if (argNumber >= args.size()) {
-                            errorStr = fmt(ErrorMessage::UnexpectedCommandLineEnd, parameter->name().c_str());
-                            errNumber = ErrorCode::UnexpectedCommandLineEnd;
-                            return;
-                        }
-                        optArg = args[argNumber];
+                    argNumber++;
+                    if (argNumber >= args.size()) {
+                        errorStr = fmt(ErrorMessage::UnexpectedCommandLineEnd, parameter->name().c_str());
+                        errNumber = ErrorCode::UnexpectedCommandLineEnd;
+                        return;
                     }
+                    optArg = args[argNumber];
+
                     auto& vm = ValidatorManager::instance();
                     std::string found;
                     bool validated = vm.validate(optArg,parameter->expectType(),found);

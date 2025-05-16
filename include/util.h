@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -46,4 +47,10 @@ namespace cli
     std::string tokenError(const std::string& token, int expectedType, bool combineOpts);
     std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes, bool combineOpts);
     std::pair<std::string, std::string> splitEquals(const std::string& token);
+
+    template<typename T>
+    bool in(const T& value, std::initializer_list<T> list) {
+        return std::find(list.begin(), list.end(), value) != list.end();
+    }
+
 }

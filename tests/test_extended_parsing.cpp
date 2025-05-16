@@ -34,4 +34,6 @@ TEST(CompactFlagsTest, ExpandsCompactFlags) {
         });
 
     app.parse("test run -vfd");
+    auto cmd = app.currentCommand;
+    EXPECT_EQ(0, cmd->errNumber);
 }

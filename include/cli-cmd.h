@@ -171,6 +171,9 @@ namespace cli
     class Command: public Actual {
         std::string m_desc;
         Action m_handler;
+        [[nodiscard]] std::vector<std::string> preprocessEquals(int start, const std::vector<std::string> &args) const;
+        [[nodiscard]] std::vector<std::string> preprocessCompact(int start, const std::vector<std::string> &args) const;
+        void parsePreprocessed(int start, const std::vector<std::string> &args);
         void parse(int start, const std::vector<std::string>& args);
         void parseHelpCommand(int start, const std::vector<std::string>& args);
         friend class Application;
