@@ -137,6 +137,7 @@ namespace cli
     struct Actual
     {
         virtual ~Actual() = default;
+        Application* app;
         std::string m_name;
         std::map<std::string, std::shared_ptr<Option>> availableOptionMap = {};
         std::vector<ArgumentValue> arguments;
@@ -147,7 +148,7 @@ namespace cli
         std::vector<std::string> mostSimilar;
         static std::optional<std::string> getParamValue(const std::string &key);
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
-        explicit Actual(std::string commandName): m_name(std::move(commandName)){}
+        Actual(Application* app, std::string commandName): app(app), m_name(std::move(commandName)){}
         void clearActual();
         [[nodiscard]] std::optional<std::string> getValue(const std::string &key) const;
     };
@@ -182,9 +183,8 @@ namespace cli
         void buildMergedOptions();
         std::set<std::string> hiddenOptNames = {};
     public:
-        Command(std::string name, Application* app): Actual(std::move(name)), formal(false),app(app) {}
+        Command(std::string name, Application* app): Actual(app, std::move(name)), formal(false) {}
         Formal formal;
-        Application* app;
         void commandNotFound(const std::string &arg);
         json asJson();
         json formalAsJson();

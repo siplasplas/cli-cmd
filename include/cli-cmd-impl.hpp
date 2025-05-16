@@ -124,7 +124,16 @@ namespace cli
 
     INLINE bool Actual::containsFlag(const std::string& opt) const
     {
-        return flagSet.find(opt) != flagSet.end();
+        auto tokenClass = (ArgType) classifyToken(opt, app->combineOpts);
+        std::string baseOption;
+        if (tokenClass == ShortOption) {
+            auto it = app->shorthandMap.find(opt);
+            if (it != app->shorthandMap.end()) {
+                baseOption = it->second;
+            } else return false;
+        } else
+            baseOption = opt;
+        return flagSet.find(baseOption) != flagSet.end();
     }
 
     INLINE void Actual::clearActual() {

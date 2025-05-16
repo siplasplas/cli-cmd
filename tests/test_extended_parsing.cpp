@@ -36,4 +36,26 @@ TEST(CompactFlagsTest, ExpandsCompactFlags) {
     app.parse("test run -vfd");
     auto cmd = app.currentCommand;
     EXPECT_EQ(0, cmd->errNumber);
+    app.execute();
+}
+
+TEST(CompactFlagsTest, GCCOptions) {
+    cli::Application app("test",1, 0, 1);
+    app.addCommand("run")
+        .addFlag("--verbose", "-v", "")
+        .addFlag("--force", "-f", "")
+        .addFlag("--debug", "-d", "")
+        .addFlag("--dry-run", "-n", "")
+        .addParameter("-vfd", "", "", "path")
+        .handler([](const cli::Actual* a) {
+            EXPECT_FALSE(a->containsFlag("-v"));
+            EXPECT_FALSE(a->containsFlag("-f"));
+            EXPECT_FALSE(a->containsFlag("-d"));
+            EXPECT_EQ(a->getValue("-vfd"), std::optional<std::string>("path/to"));
+        });
+
+    app.parse("test run -vfd path/to");
+    auto cmd = app.currentCommand;
+    EXPECT_EQ(0, cmd->errNumber);
+    app.execute();
 }
