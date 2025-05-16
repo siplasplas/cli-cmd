@@ -446,16 +446,14 @@ namespace cli
         while (argNumber < args.size())
         {
             auto arg = args[argNumber];
-            std::vector<int> expectedClasses = {BareIdentifier, Freeform};
-            expectedClasses.insert(expectedClasses.end(), {ShortOption, LongOption});
-            auto tokenErrorString = tokenError(arg, expectedClasses, app->combineOpts);
-            if (!tokenErrorString.empty()) {
-                errorStr = tokenErrorString;
-                errNumber = ErrorCode::BadTokenForm;
-                return;
-            }
             auto tokenClass = classifyToken(arg, app->combineOpts);
             std::string optStr;
+            std::string optArg;
+            if (tokenClass == LongEquals || tokenClass == ShortEquals) {
+                auto p = splitEquals(arg);
+                arg = p.first;
+                optArg = p.second;
+            }
             switch (tokenClass) {
                 case LongOption: case LongEquals:
                     optStr = arg;
@@ -493,23 +491,25 @@ namespace cli
                     flagSet.insert(optStr);
                 else if (opt->kind() == OptionKind::Parameter) {
                     auto parameter = dynamic_cast<Parameter*>(opt);
-                    argNumber++;
-                    if (argNumber >= args.size()) {
-                        errorStr = fmt(ErrorMessage::UnexpectedCommandLineEnd, parameter->name().c_str());
-                        errNumber = ErrorCode::UnexpectedCommandLineEnd;
-                        return;
+                    if (tokenClass != LongEquals && tokenClass != ShortEquals) {
+                        argNumber++;
+                        if (argNumber >= args.size()) {
+                            errorStr = fmt(ErrorMessage::UnexpectedCommandLineEnd, parameter->name().c_str());
+                            errNumber = ErrorCode::UnexpectedCommandLineEnd;
+                            return;
+                        }
+                        optArg = args[argNumber];
                     }
-                    const auto& arg1 = args[argNumber];
                     auto& vm = ValidatorManager::instance();
                     std::string found;
-                    bool validated = vm.validate(arg1,parameter->expectType(),found);
+                    bool validated = vm.validate(optArg,parameter->expectType(),found);
                     if (!validated) {
-                        errorStr = fmt(ErrorMessage::IsNotExpectedTypeParam, arg1.c_str(),
+                        errorStr = fmt(ErrorMessage::IsNotExpectedTypeParam, optArg.c_str(),
                             parameter->expectType().c_str(), arg.c_str());
                         errNumber = ErrorCode::IsNotExpectedTypeParam;
                         return;
                     }
-                    parameterMap[parameter->name()] = arg1;
+                    parameterMap[parameter->name()] = optArg;
                 }
             }
             else

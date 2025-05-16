@@ -100,7 +100,8 @@ test_sources = files(
   'tests/test_token_classification.cpp',
   'tests/test_parameters.cpp',
   'tests/test_expect.cpp',
-  'tests/test_global_local.cpp'
+  'tests/test_global_local.cpp',
+  'tests/test_extended_parsing.cpp',
 )
 
 test_exe = executable(

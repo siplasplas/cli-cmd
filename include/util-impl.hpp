@@ -182,4 +182,15 @@ namespace cli
         }
     }
 
+    INLINE std::pair<std::string, std::string> splitEquals(const std::string& token) {
+        auto pos = token.find('=');
+        if (pos == std::string::npos) {
+            return {token, ""};
+        }
+        return {
+            token.substr(0, pos),
+            token.substr(pos + 1)
+        };
+    }
+
 }

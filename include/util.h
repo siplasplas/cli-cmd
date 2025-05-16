@@ -45,4 +45,5 @@ namespace cli
     std::ostream& operator<<(std::ostream& os, ArgType type);
     std::string tokenError(const std::string& token, int expectedType, bool combineOpts);
     std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes, bool combineOpts);
+    std::pair<std::string, std::string> splitEquals(const std::string& token);
 }

@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "cli-cmd.hpp"
 
 using json = nlohmann::json;
