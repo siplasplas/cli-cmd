@@ -162,6 +162,8 @@ namespace cli
     INLINE void Formal::addFlag(Application *app, const std::string &name, const std::string &shorthand,
                                 const std::string &desc)
     {
+        if (isGlobal && app->globalOptionsLocked)
+            throw std::logic_error("global options already locked. use this method before AddCommand");
         checkNames(app, name, shorthand);
         addShorthand(app, name, shorthand);
         auto flag = std::make_shared<Flag>(name, desc, FlagMode::Present);
@@ -171,6 +173,8 @@ namespace cli
     INLINE void Formal::addParameter(Application *app, const std::string &name, const std::string &shorthand,
         const std::string &defValue, const std::string &expect, ParameterMode parameterMode, const std::string &desc)
     {
+        if (isGlobal && app->globalOptionsLocked)
+            throw std::logic_error("global options already locked. use this method before AddCommand");
         checkNames(app, name, shorthand);
         addShorthand(app, name, shorthand);
         auto parameter = std::make_shared<Parameter>(name, desc, defValue, expect, parameterMode);
@@ -532,6 +536,7 @@ namespace cli
 
     INLINE Command& Category::addCommand(std::string commandName)
     {
+        app->globalOptionsLocked = true;
         auto errStr = tokenError(commandName, ArgType::BareIdentifier, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
@@ -670,6 +675,7 @@ namespace cli
 
     INLINE Command& Application::addCommand(std::string commandName)
     {
+        globalOptionsLocked = true;
         auto errStr = tokenError(commandName, ArgType::BareIdentifier, combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
@@ -814,7 +820,7 @@ namespace cli
     }
 
     INLINE Application::Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAvailability_):
-            cmdDepth(cmdDepth_), combineOpts(combineOpts_), helpAvailability(helpAvailability_), appName(std::move(appName))
+            formal(true), cmdDepth(cmdDepth_), combineOpts(combineOpts_), helpAvailability(helpAvailability_), appName(std::move(appName))
     {
         if (!appName.empty())
             throw std::invalid_argument("appName is empty");

@@ -150,17 +150,19 @@ namespace cli
         void clearActual();
     };
 
-    struct Formal
+    class Formal
     {
+        static void checkNames(Application *app, const std::string &name, const std::string &shorthand);
+        static void addShorthand(Application *app, const std::string &name, const std::string &shorthand);
+        bool isGlobal;
+    public:
+        explicit Formal(bool isGlobal):isGlobal(isGlobal){}
         std::map<std::string, std::shared_ptr<Option>> optionMap;
         std::vector<Argument> argList;
         VaArguments vaArgs;
         void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
         void addParameter(Application * app, const std::string& name, const std::string& shorthand,
         const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
-    private:
-        static void checkNames(Application *app, const std::string &name, const std::string &shorthand);
-        static void addShorthand(Application *app, const std::string &name, const std::string &shorthand);
     };
 
     class Command: public Actual {
@@ -172,7 +174,7 @@ namespace cli
         void printSimilars();
         void printErrors();
     public:
-        Command(std::string name, Application* app): Actual(std::move(name)), app(app) {}
+        Command(std::string name, Application* app): Actual(std::move(name)), formal(false),app(app) {}
         Formal formal;
         Application* app;
         void commandNotFound(const std::string &arg);
@@ -220,6 +222,7 @@ namespace cli
         static std::vector<std::string> splitStringWithQuotes(const std::string& input);
         friend class Command;
         friend class Category;
+        friend class Formal;
     public:
         /**
         * @var cmdDepth
@@ -278,6 +281,20 @@ namespace cli
         [[nodiscard]] std::vector<std::string>  proposeSimilar(const std::string &arg) const;
         static bool findHelpOption(const std::vector<std::string> &args);
         void helpAboutHelp() const;
+        /**
+         * @brief Locks the definition of global options after commands are created.
+         *
+         * This flag is used to enforce the ordering rule that all global options
+         * (such as global flags or parameters) must be defined before any command is added.
+         *
+         * Once a command is added via Application::addCommand() or Category::addCommand,
+         * this flag is set to true.
+         * Subsequent attempts to add global flags or parameters will throw a logic_error.
+         *
+         * This prevents ambiguity and ensures consistent override behavior between
+         * global and command-specific options.
+         */
+        bool globalOptionsLocked = false;
     protected:
         void help(Actual*);
         void mainCommandStub(Actual*);
