@@ -58,6 +58,25 @@ TEST(ClassifyTokenTest, CombineOpts) {
     EXPECT_EQ(classifyToken("-abc-def=/path", 0), ArgType::GccEquals);
 }
 
+
+TEST(ClassifyTokenTest, Digits) {
+    EXPECT_EQ(classifyToken("sh-i18n", 1), ArgType::BareIdentifier);
+    EXPECT_EQ(classifyToken("sh-i18", 1), ArgType::BareIdentifier);
+    EXPECT_EQ(classifyToken("123sh-i18", 1), ArgType::Freeform);
+    EXPECT_EQ(classifyToken("-2", 1), ArgError::InvalidCompactSyntax);
+    EXPECT_EQ(classifyToken("-2=/path", 1), ArgError::InvalidCompactSyntax);
+    EXPECT_EQ(classifyToken("--1abc123-d1", 1), ArgError::InvalidLongOptionSyntax);
+    EXPECT_EQ(classifyToken("--abc123-d1", 1), ArgType::LongOption);
+    EXPECT_EQ(classifyToken("--abc123-d1-", 1), ArgError::InvalidLongOptionSyntax);
+    EXPECT_EQ(classifyToken("--abc123-d1=/path/to/file", 1), ArgType::LongEquals);
+    EXPECT_EQ(classifyToken("-ab2c", 1), ArgError::InvalidCompactSyntax);
+    EXPECT_EQ(classifyToken("-ab2c=out.txt", 1), ArgError::InvalidCompactSyntax);
+    EXPECT_EQ(classifyToken("-1ab2c", 0), ArgError::InvalidGccOptionSyntax);
+    EXPECT_EQ(classifyToken("-ab2c", 0), ArgType::GccOption);
+    EXPECT_EQ(classifyToken("-ab2c-", 0), ArgError::InvalidGccOptionSyntax);
+    EXPECT_EQ(classifyToken("-ab2c=out.txt", 0), ArgType::GccEquals);
+}
+
 TEST(TokenErrorTest, TokenMustMatchSingleType) {
     EXPECT_EQ(tokenError("--config", ArgType::LongOption, 1), "");
     EXPECT_FALSE(tokenError("--config", ArgType::ShortOption, 1).empty());

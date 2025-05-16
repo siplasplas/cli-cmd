@@ -68,7 +68,7 @@ namespace cli
             // BareIdentifier or Freeform
             if (!isalpha(s[0]) || s.back() == '-') return ArgType::Freeform;
             for (char c : s) {
-                if (!(isalpha(c) || c == '-')) return ArgType::Freeform;
+                if (!(isalnum(c) || c == '-')) return ArgType::Freeform;
             }
             return ArgType::BareIdentifier;
         }
@@ -78,7 +78,7 @@ namespace cli
             auto eq = s.find('=');
             std::string key = eq == std::string::npos ? s.substr(2) : s.substr(2, eq - 2);
 
-            if (key.size() < 2 || key.front() == '-' || key.back() == '-')
+            if (key.size() < 2 || !isalpha(key.front()) || key.back() == '-')
                 return ArgError::InvalidLongOptionSyntax;
             for (char c : key) {
                 if (!(isalnum(c) || c == '-'))
@@ -94,6 +94,8 @@ namespace cli
             if (!combineOpts) {
                 // GCC style: whole string after '-' interpreted as one option
                 // can have '-' inside
+                if (!isalpha(group.front()) || group.back() == '-')
+                    return ArgError::InvalidGccOptionSyntax;
                 for (char c : group) {
                     if (!isalnum(c) && c != '-') return ArgError::InvalidGccOptionSyntax;
                 }
@@ -104,7 +106,7 @@ namespace cli
             } else {
                 // Git-style compact flags (only letters/digits, without '-')
                 for (char c : group) {
-                    if (!isalnum(c)) return ArgError::InvalidCompactSyntax;
+                    if (!isalpha(c)) return ArgError::InvalidCompactSyntax;
                 }
                 if (group.size() == 1)
                     return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;
