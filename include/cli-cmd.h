@@ -146,7 +146,6 @@ namespace cli
         int errNumber = 0;
         std::optional<std::string> errorStr;
         std::vector<std::string> mostSimilar;
-        static std::optional<std::string> getParamValue(const std::string &key);
         [[nodiscard]] bool containsFlag(const std::string &opt) const;
         Actual(Application* app, std::string commandName): app(app), m_name(std::move(commandName)){}
         void clearActual();

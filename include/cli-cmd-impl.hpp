@@ -117,11 +117,6 @@ namespace cli
         }
     }
 
-    INLINE std::optional<std::string> Actual::getParamValue(const std::string&)
-    {
-        throw std::logic_error("Not implemented");
-    }
-
     INLINE bool Actual::containsFlag(const std::string& opt) const
     {
         auto tokenClass = (ArgType) classifyToken(opt, app->combineOpts);
