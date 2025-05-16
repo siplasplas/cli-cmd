@@ -8,7 +8,7 @@ static void dummy_handler(const Actual*) {}
 TEST(ParameterTest, OptionalParameterWithValue) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addParameter("--output", "-o", "Output file path", "general-path")
+        .addParameter("--output", "-o", "Output file path", "path")
         .handler(dummy_handler);
 
     json expectedFormal = R"({
@@ -18,7 +18,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
 		{
 			"defValue": "",
 			"desc": "Output file path",
-			"expectType": "general-path",
+			"expectType": "path",
 			"name": "--output",
 			"parameterMode": "Optional"
 		}
@@ -37,7 +37,7 @@ TEST(ParameterTest, OptionalParameterWithValue) {
 TEST(ParameterTest, RequiredParameterMissing) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addReqParameter("--config", "-c", "Configuration file", "general-path")
+        .addReqParameter("--config", "-c", "Configuration file", "path")
         .handler(dummy_handler);
 
     app.parse("test build");
@@ -48,7 +48,7 @@ TEST(ParameterTest, RequiredParameterMissing) {
 TEST(ParameterTest, DefaultParameterUsed) {
     Application app("test", 1, 1, 1);
     app.addCommand("build")
-        .addDefParameter("--log", "-l", "Log output file", "general-path", "default.log")
+        .addDefParameter("--log", "-l", "Log output file", "path", "default.log")
         .handler(dummy_handler);
 
     app.parse("test build");

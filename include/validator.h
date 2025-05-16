@@ -86,7 +86,7 @@ namespace cli {
 
     class GeneralPathValidator : public Validator {
     public:
-        [[nodiscard]] std::string name() const override { return "general-path"; }
+        [[nodiscard]] std::string name() const override { return "path"; }
         [[nodiscard]] bool validate(const std::string& value, std::string& found) const override;
         [[nodiscard]] std::vector<std::string> dependencies() const override {
             return {"linux-path", "windows-path"};
