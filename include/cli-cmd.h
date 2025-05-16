@@ -300,6 +300,13 @@ namespace cli
         Category* addCategory(const std::string& caption);
         Category& addHelpCategory(const std::string& caption);
         Command& addCommand(std::string commandName);
+        Application &addParameter(const std::string &name, const std::string &shorthand, const std::string &expect,
+                                  const std::string &desc);
+        Application &addReqParameter(const std::string &name, const std::string &shorthand, const std::string &expect,
+                                     const std::string &desc);
+        Application &addDefParameter(const std::string &name, const std::string &shorthand, const std::string &defValue,
+                                     const std::string &expect, const std::string &desc);
+        Application &addFlag(const std::string &name, const std::string &shorthand, const std::string &desc);
     };
 
 }

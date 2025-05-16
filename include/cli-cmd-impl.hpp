@@ -874,4 +874,32 @@ namespace cli
 
         return result;
     }
+    // can be overridden
+    INLINE Application& Application::addParameter(const std::string& name, const std::string& shorthand,
+        const std::string& expect, const std::string& desc)
+    {
+        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Optional, desc);
+        return *this;
+    }
+
+    INLINE Application& Application::addReqParameter(const std::string& name, const std::string& shorthand,
+        const std::string& expect, const std::string& desc)
+    {
+        formal.addParameter(this, name, shorthand, "", expect, ParameterMode::Required, desc);
+        return *this;
+    }
+
+    INLINE Application& Application::addDefParameter(const std::string& name, const std::string& shorthand,
+        const std::string& defValue, const std::string& expect, const std::string& desc)
+    {
+        formal.addParameter(this, name, shorthand, defValue, expect, ParameterMode::Defaulted, desc);
+        return *this;
+    }
+
+    INLINE Application& Application::addFlag(const std::string& name, const std::string& shorthand, const std::string& desc)
+    {
+        formal.addFlag(this, name, shorthand, desc);
+        return *this;
+    }
+
 }
