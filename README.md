@@ -37,9 +37,9 @@ void clone_(const cli::Actual* actual)
 }
 
 int main(int argc, char** argv) {
-    cli::Application app("first");
+    cli::Application app("first", 1, 1, 1);
     app.addCommand("clone").desc("Clone a repository into a new directory")
-            .addArg("repository", "url").addArgs("directory", "path", 0, 1)
+            .addArg("repository", "url").addArgs("directory", "auto-path", 0, 1)
             .handler(clone_);
     app.run(argc, argv);
     return 0;
@@ -212,10 +212,13 @@ Terminology
 
 Example (Code)
 ```
-cli::Application app("mycli");
+#include "cli-cmd.hpp"
+
+int main(int, char**) {
+    cli::Application app("mycli",1,1,1);
     app.addCommand("build")
         .addFlag("--release", "-r", "Enable release mode")
-        .addParameter("--output", "-o", "path", "Set output file path")
+        .addParameter("--output", "-o", "Set output file path", "path")
         .handler([](const cli::Actual* a) {
             if (a->containsFlag("--release")) {
                 std::cout << "Release mode ON\n";
@@ -224,7 +227,8 @@ cli::Application app("mycli");
                 std::cout << "Output: " << *out << "\n";
             }
         });
-```
+    return 0;
+}```
 CLI Usage
 ```
 mycli build -r -o bin/app
