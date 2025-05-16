@@ -155,9 +155,9 @@ namespace cli
         std::map<std::string, std::shared_ptr<Option>> optionMap;
         std::vector<Argument> argList;
         VaArguments vaArgs;
-            void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
+        void addFlag(Application* app, const std::string& name, const std::string& shorthand, const std::string& desc);
         void addParameter(Application * app, const std::string& name, const std::string& shorthand,
-            const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
+        const std::string& defValue, const std::string& expect, ParameterMode parameterMode, const std::string& desc);
     private:
         static void checkNames(Application *app, const std::string &name, const std::string &shorthand);
         static void addShorthand(Application *app, const std::string &name, const std::string &shorthand);
@@ -167,6 +167,7 @@ namespace cli
         std::string m_desc;
         Action m_handler;
         void parse(int start, const std::vector<std::string>& args);
+        void parseHelpCommand(int start, const std::vector<std::string>& args);
         friend class Application;
         void printSimilars();
         void printErrors();
@@ -275,6 +276,8 @@ namespace cli
         void printCommands(const Actual* actual) const;
         void commandHelp(Actual* actual);
         [[nodiscard]] std::vector<std::string>  proposeSimilar(const std::string &arg) const;
+        static bool findHelpOption(const std::vector<std::string> &args);
+        void helpAboutHelp() const;
     protected:
         void help(Actual*);
         void mainCommandStub(Actual*);
@@ -286,6 +289,7 @@ namespace cli
         Application(std::string appName, int cmdDepth_, int combineOpts_, int helpAvailability_);
         std::string appName;
         std::shared_ptr<Command> mainCommand;
+        std::shared_ptr<Command> helpCommand;
         std::shared_ptr<Command> currentCommand;
         void execute();
         std::shared_ptr<Command> getCommand(const std::string& name);

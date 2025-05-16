@@ -193,7 +193,7 @@ namespace cli
     {
         errNumber = ErrorCode::UnknownCommand;
         errorStr = fmt(ErrorMessage::UnknownCommand,
-            app->appName.c_str(), m_name.c_str(), app->appName.c_str(), app->appName.c_str());
+            m_name.c_str(), app->appName.c_str(), app->appName.c_str());
         mostSimilar = app->proposeSimilar(arg);
     }
 
@@ -267,7 +267,6 @@ namespace cli
             for (const auto& arg : arguments)
                 std::cout << arg.value << " = [" << arg.argument.name() << ":" << arg.argument.expectType() << "]\n";
         else if (errNumber == ErrorCode::UnknownCommand) {
-            auto cmdHelp = app->getCommand("help");
             printSimilars();
         }
     }
@@ -443,13 +442,13 @@ namespace cli
             }
             else
             {
-                Argument formalArgument;
+                Argument formalArgument("string","string");//default value when formal.vaArgs empty
                 if (count < formal.argList.size())
                 {
                     formalArgument = formal.argList[count++];
-                } else
+                } else if (formal.vaArgs.max_n > 0)
                 {
-                    formalArgument = formal.vaArgs;
+                    formalArgument = *static_cast<Argument*>(&formal.vaArgs);
                     varCount++;
                 }
                 auto& vm = ValidatorManager::instance();
@@ -484,21 +483,50 @@ namespace cli
         if (arguments.size() < formal.argList.size() + formal.vaArgs.min_n)
         {
             errNumber = ErrorCode::TooFewArguments;
-            errorStr = fmt(ErrorMessage::TooFewArguments,
-                app->appName.c_str(), m_name.c_str(), arguments.size(),
-                formal.argList.size() + formal.vaArgs.min_n);
+            if (arguments.size() > 1)
+                errorStr = fmt(ErrorMessage::TooFewArguments,
+                    m_name.c_str(), arguments.size(),
+                    formal.argList.size() + formal.vaArgs.min_n);
+            else
+                errorStr = fmt(ErrorMessage::TooFewArguments1,
+                    m_name.c_str(),
+                    formal.argList.size() + formal.vaArgs.min_n);
+
         }
         else if (arguments.size() > formal.argList.size() + formal.vaArgs.max_n)
         {
             errNumber = ErrorCode::TooManyArguments;
-            errorStr = fmt(ErrorMessage::TooManyArguments,
-                            app->appName.c_str(), m_name.c_str(), arguments.size(),
-                            formal.argList.size() + formal.vaArgs.max_n);
+            if (arguments.size() > 1)
+                errorStr = fmt(ErrorMessage::TooManyArguments,
+                                m_name.c_str(), arguments.size(),
+                                formal.argList.size() + formal.vaArgs.max_n);
+            else
+                errorStr = fmt(ErrorMessage::TooManyArguments1,
+                                m_name.c_str(),
+                                formal.argList.size() + formal.vaArgs.max_n);
+
         }
         else if (!m_handler)
         {
             errNumber = ErrorCode::MissingHandler;
-            errorStr = fmt(ErrorMessage::MissingHandler, app->appName.c_str(),m_name.c_str());
+            errorStr = fmt(ErrorMessage::MissingHandler, m_name.c_str());
+        }
+    }
+
+    INLINE void Command::parseHelpCommand(int start, const std::vector<std::string> &args) {
+        clearActual();
+        if (app->cmdDepth == 3)
+            for (size_t i = start; i < args.size(); i++) {
+                if (args[i] == "--all")
+                    flagSet.insert(args[i]);
+            }
+        for (size_t i = start; i < args.size(); i++) {
+            int type = classifyToken(args[i], app->combineOpts);
+            if (type == BareIdentifier) {
+                Argument formalArgument("command", "identifier");
+                arguments.emplace_back(formalArgument, args[i]);
+                break;
+            }
         }
     }
 
@@ -568,43 +596,45 @@ namespace cli
         keys.reserve(commandMap.size());
         std::transform(commandMap.begin(), commandMap.end(), std::back_inserter(keys),
                        [](const auto& pair) { return pair.first; });
+        keys.emplace_back("--help");
+        if (helpAvailability > 0)
+            keys.emplace_back("help");
         auto mostSimilar = findMostSimilar(arg, keys);
+
         return mostSimilar;
+    }
+
+    INLINE bool Application::findHelpOption(const std::vector<std::string>& args) {
+        for (size_t i = 1; i < args.size(); i++)
+            if (args[i] == "--help")
+                return true;
+        return false;
     }
 
     INLINE void Application::parse(const std::vector<std::string>& args)
     {
-        auto it = commandMap.find("help");
-        if (it == commandMap.end())
-            throw std::runtime_error("help not exists");
-        if (args.size() < 2)
-        {
-            if (mainCommand)
-                currentCommand = mainCommand;
-            else
-            {   auto helpCommand = getCommand("help");
-                currentCommand = helpCommand;
-            }
+        if (helpAvailability > 0 && args.size()>1 && args[1] == "help") {
+            currentCommand = helpCommand;
+            currentCommand->parseHelpCommand(2, args);
             return;
         }
-        int start = 1;
+        if (findHelpOption(args)) {
+            currentCommand = helpCommand;
+            currentCommand->parseHelpCommand(1, args);
+            return;
+        }
         if (cmdDepth == 0)
         {
             currentCommand = mainCommand;
-            if (args[1] == "help")
-            {
-                auto cmdHelp = getCommand("help");
-                cmdHelp->arguments.clear();
-                Argument argument("command","identifier");
-                ArgumentValue argValue(argument, appName);
-                cmdHelp->arguments.push_back(argValue);
-                help(cmdHelp.get());
-            }
+            currentCommand->parse(1, args);
         }
         else
         {
-            start = 2;
-            it = commandMap.find(args[1]);
+            if (args.size() < 2) {
+                currentCommand = mainCommand;
+                return;
+            }
+            auto it = commandMap.find(args[1]);
             if (it == commandMap.end())
             {
                 currentCommand = std::make_shared<Command>(args[1], this);
@@ -613,7 +643,7 @@ namespace cli
             else
             {
                 currentCommand = it->second;
-                currentCommand->parse(start, args);
+                currentCommand->parse(2, args);
             }
         }
     }
@@ -714,6 +744,17 @@ namespace cli
             commandHelp(actual);
     }
 
+    INLINE void Application::helpAboutHelp() const {
+        std::cout << appName << ": ";
+        std::cout << "use --help";
+        if (helpAvailability > 0)
+            std::cout << " or help";
+        if (cmdDepth == 3)
+            std::cout << " [--all]";
+        std::cout << " [command]";
+        std::cout << std::endl;
+    }
+
     INLINE void Application::mainCommandStub(Actual* actual)
     {
         if (cmdDepth == 0)
@@ -721,32 +762,32 @@ namespace cli
             std::cout << "stub command, use:" << std::endl << std::endl;
             std::cout << "  auto mainCommand = app.mainCommand;" << std::endl;
             std::cout << "  mainCommand->setHandler(mainHandler);" << std::endl;
-        } else
+        }
+        else if (helpAvailability == 2)
             help(actual);
+        else
+            helpAboutHelp();
     }
 
     INLINE void Application::initSystemCommands()
     {
-        if (cmdDepth == 0)
-        {
-            Action actionStub = [this](Actual* actual) {
-                mainCommandStub(actual);
-            };
-            mainCommand = std::make_shared<Command>(appName, this);
-            mainCommand->desc(appName);
-            mainCommand->handler(actionStub);
-            mainCommand->app = this;
-            commands.push_back(mainCommand);
-            commandMap.emplace(appName, commands.back());
-        }
+        Action actionStub = [this](Actual* actual) {
+            mainCommandStub(actual);
+        };
+        mainCommand = std::make_shared<Command>(appName, this);
+        mainCommand->desc(appName);
+        mainCommand->handler(actionStub);
+        mainCommand->app = this;
 
         Action actionHelp = [this](Actual* actual) {
             help(actual);
         };
-        auto &helpCmd = addCommand("help").desc("Display help information about " + appName).handler(actionHelp)
-                .addArgs("command", "identifier", 0, 1);
+        helpCommand = std::make_shared<Command>(appName, this);
+        helpCommand->desc("Display help information about " + appName);
+        helpCommand->handler(actionHelp);
+        helpCommand->app = this;
         if (cmdDepth==3)
-            helpCmd.addFlag("--all", "", "all commands");
+            helpCommand->addFlag("--all", "", "all commands");
     }
 
     INLINE void Application::registerValidators() {

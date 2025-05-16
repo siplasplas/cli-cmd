@@ -20,16 +20,22 @@ namespace cli::ErrorCode {
 namespace cli::ErrorMessage {
 
     inline constexpr const char* MissingHandler =
-        "%s : %s is placeholder with positional arguments:";
+        "error: %s is placeholder with positional arguments:";
 
     inline constexpr const char* TooFewArguments =
-        "%s : %s have %d arguments but minimal is %d";
+        "error: %s have %d arguments but minimal is %d";
 
     inline constexpr const char* TooManyArguments =
-        "%s : %s have %d arguments but maximal is %d";
+        "error: %s have %d arguments but maximal is %d";
+
+    inline constexpr const char* TooFewArguments1 =
+        "error: %s have 1 argument but minimal is %d";
+
+    inline constexpr const char* TooManyArguments1 =
+        "error: %s have 1 argument but maximal is %d";
 
     inline constexpr const char* UnknownCommand =
-        "%s: '%s' is not a %s command. See '%s --help'";
+        "error: '%s' is not a %s command. See '%s --help'";
 
     inline constexpr const char* UnknownShortOption =
         "error: unknown short option `%s'";

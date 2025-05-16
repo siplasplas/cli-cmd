@@ -1,10 +1,11 @@
 #include "cli-cmd.hpp"
 
-int main(int argc, char** argv) {
-    cli::Application app("mycli");
+void test(int cmdDepth, int helpAvailability) {
+    std::cout << cli::fmt("==================cmdDepth=%d, helpAvailability=%d\n",cmdDepth,helpAvailability);
+    cli::Application app("test", cmdDepth,1,helpAvailability);
     app.addCommand("build")
         .addFlag("--release", "-r", "Enable release mode")
-        .addParameter("--output", "-o", "path", "Set output file path")
+        .addParameter("--output", "-o", "linux-path", "Set output file path")
         .handler([](const cli::Actual* a) {
             if (a->containsFlag("--release")) {
                 std::cout << "Release mode ON\n";
@@ -13,6 +14,30 @@ int main(int argc, char** argv) {
                 std::cout << "Output: " << *out << "\n";
             }
         });
-    app.run(argc, argv);
+
+    app.parse("test");
+    app.execute();
+
+    app.parse("test help");
+    auto cmd = app.currentCommand;
+    app.execute();
+
+    app.parse("test help build");
+    app.execute();
+
+    app.parse("test --help");
+    app.execute();
+    app.parse("test help --all");
+    app.execute();
+    app.parse("test --help --all");
+    app.execute();
+    app.parse("test build --help");
+    app.execute();
+}
+
+int main(int argc, char** argv) {
+    for (int cmDepth = 0; cmDepth <= 3; cmDepth++)
+        for (int ha = 0; ha <= 2; ha++)
+            test(cmDepth, ha);
     return 0;
 }
