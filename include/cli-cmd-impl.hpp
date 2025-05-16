@@ -532,9 +532,11 @@ namespace cli
 
     INLINE Command& Category::addCommand(std::string commandName)
     {
-        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
+        if (commandName == "help")
+            throw std::invalid_argument("Command name 'help' is reserved");
         if (app->commandMap.find(commandName) == app->commandMap.end()) {
             std::shared_ptr<Command> command = std::make_shared<Command>(commandName, app);
             command->app = app;
@@ -546,7 +548,7 @@ namespace cli
 
     INLINE Category& Category::ref(const std::string& commandName)
     {
-        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier, app->combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
         auto it = app->commandMap.find(commandName);
@@ -668,9 +670,11 @@ namespace cli
 
     INLINE Command& Application::addCommand(std::string commandName)
     {
-        auto errStr = tokenError(commandName, ArgType::BareIdentifier);
+        auto errStr = tokenError(commandName, ArgType::BareIdentifier, combineOpts);
         if (!errStr.empty())
             throw std::invalid_argument(errStr);
+        if (commandName == "help")
+            throw std::invalid_argument("Command name 'help' is reserved");
         if (commandMap.find(commandName) == commandMap.end()) {
             std::shared_ptr<Command> command = std::make_shared<Command>(commandName, this);
             command->app = this;
@@ -782,7 +786,7 @@ namespace cli
         Action actionHelp = [this](Actual* actual) {
             help(actual);
         };
-        helpCommand = std::make_shared<Command>(appName, this);
+        helpCommand = std::make_shared<Command>("help", this);
         helpCommand->desc("Display help information about " + appName);
         helpCommand->handler(actionHelp);
         helpCommand->app = this;

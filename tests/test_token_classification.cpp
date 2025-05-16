@@ -50,26 +50,12 @@ TEST(ClassifyTokenTest, CombineOpts) {
     EXPECT_EQ(classifyToken("-abc=/path", 1), ArgType::CompactEquals);
     EXPECT_EQ(classifyToken("-abc-def", 1), ArgError::InvalidCompactSyntax);
     EXPECT_EQ(classifyToken("-abc-def=/path", 1), ArgError::InvalidCompactSyntax);
+    EXPECT_EQ(classifyToken("-a", 0), ArgType::ShortOption);
+    EXPECT_EQ(classifyToken("-a=/path", 0), ArgType::ShortEquals);
+    EXPECT_EQ(classifyToken("-abc", 0), ArgType::GccOption);
+    EXPECT_EQ(classifyToken("-abc=/path", 0), ArgType::GccEquals);
     EXPECT_EQ(classifyToken("-abc-def", 0), ArgType::GccOption);
     EXPECT_EQ(classifyToken("-abc-def=/path", 0), ArgType::GccEquals);
-}
-
-
-TEST(TokenErrorTest, ValidTokenReturnsEmptyString) {
-    EXPECT_EQ(tokenError("clone", 1), "");
-    EXPECT_EQ(tokenError("-v", 1), "");
-    EXPECT_EQ(tokenError("--output", 1), "");
-    EXPECT_EQ(tokenError("-abc", 1), "");
-    EXPECT_EQ(tokenError("--log=debug", 1), "");
-    EXPECT_EQ(tokenError("-o=val", 1), "");
-}
-
-TEST(TokenErrorTest, InvalidTokenReturnsErrorString) {
-    EXPECT_FALSE(tokenError("", 1).empty());
-    EXPECT_FALSE(tokenError("-", 1).empty());
-    EXPECT_FALSE(tokenError("---", 1).empty());
-    EXPECT_FALSE(tokenError("--a", 1).empty()); // too short
-    EXPECT_FALSE(tokenError("--@invalid", 1).empty());
 }
 
 TEST(TokenErrorTest, TokenMustMatchSingleType) {

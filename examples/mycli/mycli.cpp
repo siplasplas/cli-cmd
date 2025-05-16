@@ -35,7 +35,7 @@ void test(int cmdDepth, int helpAvailability) {
     app.execute();
 }
 
-int main(int argc, char** argv) {
+int main(int, char**) {
     for (int cmDepth = 0; cmDepth <= 3; cmDepth++)
         for (int ha = 0; ha <= 2; ha++)
             test(cmDepth, ha);

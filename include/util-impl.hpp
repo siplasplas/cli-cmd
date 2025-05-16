@@ -97,17 +97,20 @@ namespace cli
                 for (char c : group) {
                     if (!isalnum(c) && c != '-') return ArgError::InvalidGccOptionSyntax;
                 }
-                return (eq != std::string::npos) ? ArgType::GccEquals : ArgType::GccOption;
+                if (group.size() == 1)
+                    return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;
+                else
+                    return (eq != std::string::npos) ? ArgType::GccEquals : ArgType::GccOption;
+            } else {
+                // Git-style compact flags (only letters/digits, without '-')
+                for (char c : group) {
+                    if (!isalnum(c)) return ArgError::InvalidCompactSyntax;
+                }
+                if (group.size() == 1)
+                    return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;
+                else
+                    return (eq != std::string::npos) ? ArgType::CompactEquals : ArgType::CompactFlags;
             }
-
-            // Git-style compact flags (only letters/digits, without '-')
-            for (char c : group) {
-                if (!isalnum(c)) return ArgError::InvalidCompactSyntax;
-            }
-            if (group.size() == 1)
-                return (eq != std::string::npos) ? ArgType::ShortEquals : ArgType::ShortOption;
-            else
-                return (eq != std::string::npos) ? ArgType::CompactEquals : ArgType::CompactFlags;
         }
 
         return ArgType::Freeform;
@@ -140,13 +143,6 @@ namespace cli
 
     INLINE std::ostream& operator<<(std::ostream& os, ArgType type) {
         return os << to_string_argtype(static_cast<int>(type));
-    }
-
-    INLINE std::string tokenError(const std::string& token, bool combineOpts) {
-        int type = classifyToken(token, combineOpts);
-        return (type < 0)
-            ? std::string("Invalid token: ") + token + " (" + to_string_argtype(type) + ")"
-            : "";
     }
 
     INLINE std::string tokenError(const std::string& token, int expectedType, bool combineOpts) {

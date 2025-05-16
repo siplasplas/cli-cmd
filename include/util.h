@@ -43,7 +43,6 @@ namespace cli
     int classifyToken(const std::string& s, bool combineOpts);
     const char* to_string_argtype(int code);
     std::ostream& operator<<(std::ostream& os, ArgType type);
-    std::string tokenError(const std::string& token, bool combineOpts);
     std::string tokenError(const std::string& token, int expectedType, bool combineOpts);
     std::string tokenError(const std::string& token, const std::vector<int>& expectedTypes, bool combineOpts);
 }
