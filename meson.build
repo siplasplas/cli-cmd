@@ -10,28 +10,25 @@ clicmd_mode = get_option('clicmd_mode')
 
 inc = include_directories('include')
 
+clicmd_sources = files(
+  'src/cli-cmd.cpp',
+  'src/distance.cpp',
+  'src/util.cpp',
+  'src/validator.cpp',
+)
+
 if clicmd_mode == 0
   message('cli-cmd: header-only mode selected')
   add_project_arguments('-DCLICMD_HEADER_ONLY', language : 'cpp')
   lib_dep = declare_dependency(include_directories : inc)
 
+
 elif clicmd_mode == 1
   message('cli-cmd: source inclusion mode selected')
-  clicmd_sources = files(
-    'src/cli-cmd.cpp',
-    'src/distance.cpp',
-    'src/util.cpp',
-    'src/validator.cpp',
-  )
   lib_dep = declare_dependency(sources : clicmd_sources, include_directories : inc)
 
 elif clicmd_mode == 2
   message('cli-cmd: static library mode selected')
-  clicmd_sources = files(
-    'src/cli-cmd.cpp',
-    'src/distance.cpp',
-    'src/util.cpp',
-  )
   clicmd_lib = static_library(
     'cli-cmd',
     sources: clicmd_sources,
